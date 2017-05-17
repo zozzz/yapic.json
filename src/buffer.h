@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "util.h"
-#include "pystring.h"
 #include "globals.h"
 
 

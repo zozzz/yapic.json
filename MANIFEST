@@ -28,6 +28,4 @@ src/globals.h
 src/homogene_list.h
 src/json.cpp
 src/json.h
-src/pystring.h
-src/sse.h
 src/util.h
