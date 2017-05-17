@@ -66,7 +66,7 @@ class MemoryBuffer {
 					PyErr_NoMemory();
 					return false;
 				}
-				MoveBytes(start, current_start, current_usage);
+				CopyBytes(start, current_start, current_usage);
 				is_heap = true;
 			}
 
@@ -81,20 +81,19 @@ class MemoryBuffer {
 			if (str != NULL) {
 				switch (PyUnicode_KIND(str)) {
 					case PyUnicode_1BYTE_KIND:
-						MoveBytes(PyUnicode_1BYTE_DATA(str), start, l);
+						CopyBytes(PyUnicode_1BYTE_DATA(str), start, l);
 					break;
 
 					case PyUnicode_2BYTE_KIND:
-						MoveBytes(PyUnicode_2BYTE_DATA(str), start, l);
+						CopyBytes(PyUnicode_2BYTE_DATA(str), start, l);
 					break;
 
 					case PyUnicode_4BYTE_KIND:
-						MoveBytes(PyUnicode_4BYTE_DATA(str), start, l);
+						CopyBytes(PyUnicode_4BYTE_DATA(str), start, l);
 					break;
 				}
-				return str;
 			}
-			return NULL;
+			return str;
 		}
 };
 
@@ -162,6 +161,7 @@ enum ChunkKind {
 	Chunk_CHAR_KIND
 };
 
+
 template<typename T>
 struct ChunkKindByType;
 
@@ -175,7 +175,6 @@ template<>
 struct ChunkKindByType<Py_UCS4> { static const ChunkKind Kind = Chunk_4BYTE_KIND; };
 
 
-// template<typename CHAR_T>
 class ChunkBuffer {
 	public:
 		struct Chunk {
@@ -184,7 +183,7 @@ class ChunkBuffer {
 			ChunkKind kind;
 		};
 
-		Chunk initial[256];
+		Chunk initial[ZIBO_JSON_CHUNK_BUFFER_SIZE];
 		Chunk* chunksBegin;
 		Chunk* chunksEnd;
 		Chunk* chunk;
@@ -192,7 +191,7 @@ class ChunkBuffer {
 		Py_ssize_t totalLength;
 
 		inline ChunkBuffer()
-			: chunksBegin(initial), chunksEnd(initial + 256), chunk(initial),
+			: chunksBegin(initial), chunksEnd(initial + ZIBO_JSON_CHUNK_BUFFER_SIZE), chunk(initial),
 			  totalLength(0) {
 
 		}
@@ -226,26 +225,22 @@ class ChunkBuffer {
 
 		PyObject* NewString(Py_ssize_t maxchar) {
 			PyObject* str = PyUnicode_New(totalLength, maxchar);
-			if (str == NULL) {
-				return str;
+			if (str != NULL) {
+				switch (PyUnicode_KIND(str)) {
+					case PyUnicode_1BYTE_KIND:
+						Write(PyUnicode_1BYTE_DATA(str));
+					break;
+
+					case PyUnicode_2BYTE_KIND:
+						Write(PyUnicode_2BYTE_DATA(str));
+					break;
+
+					default:
+						assert(PyUnicode_KIND(str) == PyUnicode_4BYTE_KIND);
+						Write(PyUnicode_4BYTE_DATA(str));
+					break;
+				}
 			}
-
-			switch (PyUnicode_KIND(str)) {
-				case PyUnicode_1BYTE_KIND:
-					Write(PyUnicode_1BYTE_DATA(str));
-				break;
-
-				case PyUnicode_2BYTE_KIND:
-					Write(PyUnicode_2BYTE_DATA(str));
-				break;
-
-				default:
-					assert(PyUnicode_KIND(str) == PyUnicode_4BYTE_KIND);
-					Write(PyUnicode_4BYTE_DATA(str));
-				break;
-			}
-			// chunk = chunksBegin;
-			// totalLength = 0;
 			return str;
 		}
 
@@ -253,25 +248,27 @@ class ChunkBuffer {
 		inline void Write(O* target) const {
 			register Chunk* c = chunksBegin;
 
-			while (c < chunk) {
+			while (c++ < chunk) {
 				switch (c->kind) {
 					case Chunk_1BYTE_KIND:
-						WriteChunk<Py_UCS1, O>(c, target, &target);
+						CopyBytes(target, (Py_UCS1*) c->data, c->length);
+						target += c->length;
 					break;
 
 					case Chunk_2BYTE_KIND:
-						WriteChunk<Py_UCS2, O>(c, target, &target);
+						CopyBytes(target, (Py_UCS2*) c->data, c->length);
+						target += c->length;
 					break;
 
 					case Chunk_4BYTE_KIND:
-						WriteChunk<Py_UCS4, O>(c, target, &target);
+						CopyBytes(target, (Py_UCS4*) c->data, c->length);
+						target += c->length;
 					break;
 
 					case Chunk_CHAR_KIND:
 						*(target++) = (O) c->length;
 					break;
 				}
-				++c;
 			}
 		}
 
@@ -281,21 +278,6 @@ class ChunkBuffer {
 		}
 
 	private:
-		template<typename I, typename O>
-		inline void WriteChunk(Chunk* chunk, register O* target, O** targetOut) const {
-			if (sizeof(I) == sizeof(O)) {
-				memmove(target, chunk->data, chunk->length * sizeof(I));
-				*targetOut = target + chunk->length;
-			} else {
-				register I* data = (I*) chunk->data;
-				register Py_ssize_t l = chunk->length;
-				while (l-- > 0) {
-					target[l] = data[l];
-				}
-				*targetOut = target + chunk->length;
-			}
-		}
-
 		inline bool GotoNextChunk() {
 			return (++chunk >= chunksEnd ? Resize() : true);
 		}

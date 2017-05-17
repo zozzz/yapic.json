@@ -77,34 +77,17 @@ static PyObject *ZiboJson_dump(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
-#define NEW_PARSER 1
+#include "decoder.h"
 
-#if NEW_PARSER
-
-	#include "decoder.h"
-
-	#define __decode(T) { \
-		ZiboJson::Decoder<T, ZiboJson::MemoryBuffer<Py_UCS4, ZIBO_JSON_DECODER_BUFFER_SIZE> > decoder(\
-			(T*) PyUnicode_DATA(input), \
-			PyUnicode_GET_LENGTH(input)); \
-		decoder.objectHook = objectHook; \
-		decoder.parseFloat = parseFloat; \
-		decoder.parseDate = parseDate; \
-		return decoder.Decode(); \
-		}
-#else
-
-	#include "_decoder.h"
-
-	#define __decode(T) { \
-		ZiboJson::Decoder<T, ZiboJson::MemoryBuffer<Py_UCS4, ZIBO_JSON_DECODER_BUFFER_SIZE> > decoder((T*) data, length); \
-		decoder.objectHook = objectHook; \
-		decoder.parseFloat = parseFloat; \
-		decoder.parseDate = parseDate; \
-		return decoder.ReadValue(); \
-		}
-#endif
-
+#define __decode(T) { \
+	ZiboJson::Decoder<T, Py_UCS4> decoder(\
+		(T*) PyUnicode_DATA(input), \
+		PyUnicode_GET_LENGTH(input)); \
+	decoder.objectHook = objectHook; \
+	decoder.parseFloat = parseFloat; \
+	decoder.parseDate = parseDate; \
+	return decoder.Decode(); \
+	}
 
 static PyObject *ZiboJson_loads(PyObject *self, PyObject *args, PyObject *kwargs) {
 	static char* kwlist[] = {"s", "object_hook", "parse_float", "parse_date", NULL};
@@ -124,11 +107,6 @@ static PyObject *ZiboJson_loads(PyObject *self, PyObject *args, PyObject *kwargs
 		if (parseFloat != NULL && !PyCallable_Check(parseFloat)) {
 			PyErr_SetString(PyExc_TypeError, "argument 'parse_float' must be callable");
 		}
-
-		#if NEW_PARSER == 0
-		void* data = PyUnicode_DATA(input);
-		size_t length = PyUnicode_GET_LENGTH(input);
-		#endif
 
 		switch (PyUnicode_KIND(input)) {
 			case PyUnicode_1BYTE_KIND:

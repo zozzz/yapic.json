@@ -57,11 +57,9 @@ namespace ZiboJson {
 using namespace double_conversion;
 
 
-template<typename CHIN, typename BUFF>
+template<typename CHIN, typename CHOUT>
 class Decoder {
 	public:
-		typedef typename BUFF::Char CHOUT;
-
 		CHIN* inputStart;
 		CHIN* inputEnd;
 

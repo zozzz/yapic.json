@@ -26,7 +26,6 @@ def unicode_chars(request):
     return request.param
 
 
-# @pytest.mark.skip
 def test_encode_chars(unicode_chars, ensure_ascii):
     for chc in unicode_chars:
         ch = chr(chc)
@@ -66,7 +65,6 @@ def test_encode_string(value, ensure_ascii):
     "половинуÁ𐌐𐌑𐌓 \r\nFsdf áésfak,sd opőfiunü39q35r78égp-vbfynkjsa.géélfhgpqa97gi3ztö" * 10
 ])
 def test_decode_string(value, ensure_ascii):
-    # print(value)
     expected = value
     value = py_json.dumps(value, ensure_ascii=True)
     assert zibo_json.loads(value) == expected
