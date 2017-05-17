@@ -6,7 +6,7 @@
 #include "../libs/double-conversion/double-conversion/double-conversion.h"
 #include "../libs/double-conversion/double-conversion/strtod.h"
 #include "config.h"
-#include "chunk-buffer.h"
+#include "buffer.h"
 
 
 #define Decoder_Error(msg) \

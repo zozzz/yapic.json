@@ -7,21 +7,6 @@
 #include "globals.h"
 
 
-#define ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR 0
-
-
-#if 0 && ZIBO_JSON_USE_SSE
-#	include "sse.h"
-#	define ZiboJson_Buffer_ConvertBytes(from_type, to_type, begin, l, to) \
-		sse::string_copy<to_type, from_type>(to, begin, l * sizeof(from_type))
-#else
-#	define ZiboJson_Buffer_ConvertBytes(from_type, to_type, begin, l, to) \
-		register to_type* data = to; \
-		register from_type* buff = begin; \
-		while (l--) { data[l] = buff[l]; }
-#endif
-
-
 namespace ZiboJson {
 
 #define ZiboJson_Buffer_ASCII_MAXCHAR 	0x7F
@@ -33,64 +18,6 @@ namespace ZiboJson {
 #define ZiboJson_Buffer_4B_MAXCHAR 		0x10FFFF
 
 
-
-
-
-// template<typename UCS>
-// inline UCS DetermineMaxChar(register UCS* begin, register UCS* end) {
-// 	register UCS maxchar = ZiboJson_Buffer_ASCII_MAXCHAR;
-// 	while (begin < end) {
-// 		if (*begin > maxchar) {
-// 			maxchar = *begin;
-// 		}
-// 		++begin;
-// 	}
-// 	return maxchar;
-// }
-
-
-// template<>
-// inline Py_UCS1 DetermineMaxChar(register Py_UCS1* begin, register Py_UCS1* end) {
-// 	while (begin < end) {
-// 		if (*(begin++) > ZiboJson_Buffer_EXTASCII_FROM) {
-// 			return ZiboJson_Buffer_1B_MAXCHAR;
-// 		}
-// 	}
-// 	return ZiboJson_Buffer_ASCII_MAXCHAR;
-// }
-
-
-// template<>
-// inline Py_UCS2 DetermineMaxChar(register Py_UCS2* begin, register Py_UCS2* end) {
-// 	register Py_UCS2 maxchar = ZiboJson_Buffer_ASCII_MAXCHAR;
-// 	while(begin < end) {
-// 		if (*begin > ZiboJson_Buffer_2B_FROM) {
-// 			return ZiboJson_Buffer_2B_MAXCHAR;
-// 		} else if (*begin > maxchar) {
-// 			maxchar = *begin;
-// 		}
-// 		++begin;
-// 	};
-// 	return maxchar;
-// }
-
-
-// template<>
-// inline Py_UCS4 DetermineMaxChar(Py_UCS4* begin, Py_UCS4* end) {
-// 	register Py_UCS4 maxchar = ZiboJson_Buffer_ASCII_MAXCHAR;
-// 	while(begin < end) {
-// 		if (*begin > ZiboJson_Buffer_4B_FROM) {
-// 			return ZiboJson_Buffer_4B_MAXCHAR;
-// 		} else if (*begin > maxchar) {
-// 			maxchar = *begin;
-// 		}
-// 		++begin;
-// 	};
-// 	return maxchar;
-// }
-
-
-
 template<typename T, size_t length>
 class MemoryBuffer {
 	public:
@@ -100,17 +27,12 @@ class MemoryBuffer {
 		T* start;
 		T* end;
 		T* cursor;
-#if !ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
 		T maxchar;
-#endif
 		bool is_heap;
 
 		inline explicit MemoryBuffer()
 			: start(initial), end(start + length), cursor(initial),
-#if !ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
-			  maxchar(127),
-#endif
-			  is_heap(false) {
+			  maxchar(127), is_heap(false) {
 		}
 
 		inline ~MemoryBuffer() {
@@ -145,11 +67,7 @@ class MemoryBuffer {
 					PyErr_NoMemory();
 					return false;
 				}
-				memmove(start, current_start,
-					sizeof(T) == 1 ? current_usage :
-					sizeof(T) == 2 ? current_usage << 1 :
-					sizeof(T) == 4 ? current_usage << 2 :
-					sizeof(T) * current_usage);
+				MoveBytes(start, current_start, current_usage);
 				is_heap = true;
 			}
 
@@ -158,267 +76,40 @@ class MemoryBuffer {
 			return true;
 		}
 
-#if 0
-
 		inline PyObject* NewString() {
 			Py_ssize_t l = cursor - start;
-			cursor = start;
-			return PyUnicode_FromKindAndData(PyUnicode_Traits<T>::Kind, start, l);
-		}
+			PyObject* str = PyUnicode_New(l, maxchar);
+			if (str != NULL) {
+				switch (PyUnicode_KIND(str)) {
+					case PyUnicode_1BYTE_KIND:
+						MoveBytes(PyUnicode_1BYTE_DATA(str), start, l);
+					break;
 
-#elif 1
+					case PyUnicode_2BYTE_KIND:
+						MoveBytes(PyUnicode_2BYTE_DATA(str), start, l);
+					break;
 
-	#if !ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
-
-		PyObject* NewString() {
-			return NewString(maxchar);
-		}
-
-		inline PyObject* NewString(T maxchar) {
-	#else
-		inline PyObject* NewString() {
-	#endif
-			// printf("TOTAL: %ld UNUSED: %ld\n", end-start, end - cursor);
-			// printf("maxchar (%d) = %ld == %ld\n", sizeof(T), DetermineMaxChar(start, cursor), maxchar);
-			register Py_ssize_t l = cursor - start;
-			#if ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
-				PyObject* str = PyUnicode_New(l, PyUnicode_Traits<T>::DetermineMaxChar(start, l));
-			#else
-				PyObject* str = PyUnicode_New(l, maxchar);
-			#endif
-			if (str == NULL) {
-				return NULL;
+					case PyUnicode_4BYTE_KIND:
+						MoveBytes(PyUnicode_4BYTE_DATA(str), start, l);
+					break;
+				}
+				return str;
 			}
-
-			switch (PyUnicode_KIND(str)) {
-				case PyUnicode_1BYTE_KIND:
-					if (sizeof(T) == 1) {
-						memmove(PyUnicode_DATA(str), start, l);
-					} else {
-						ZiboJson_Buffer_ConvertBytes(T, Py_UCS1, start, l, PyUnicode_1BYTE_DATA(str));
-					}
-				break;
-
-				case PyUnicode_2BYTE_KIND:
-					if (sizeof(T) == 2) {
-						memmove(PyUnicode_DATA(str), start, l << 1);
-					} else {
-						ZiboJson_Buffer_ConvertBytes(T, Py_UCS2, start, l, PyUnicode_2BYTE_DATA(str));
-					}
-				break;
-
-				case PyUnicode_4BYTE_KIND:
-					if (sizeof(T) == 4) {
-						memmove(PyUnicode_DATA(str), start, l << 2);
-					} else {
-						ZiboJson_Buffer_ConvertBytes(T, Py_UCS4, start, l, PyUnicode_4BYTE_DATA(str));
-					}
-				break;
-			}
-			cursor = start;
-			// maxchar = 127;
-			return str;
+			return NULL;
 		}
-#endif
 };
 
-
-
-
-
-
-
-
-// template<typename T>
-// class MemoryBuffer {
-// 	public:
-// 		typedef T Char;
-
-// 		T* start;
-// 		T* end;
-// 		T* cursor;
-// 		PyObject* string;
-// 		T maxchar;
-// 		T last_maxchar;
-// 		bool is_heap;
-
-// 		inline explicit MemoryBuffer(T* initial)
-// 			: start(initial), end(start + ZIBO_JSON_ENCODER_BUFFER_SIZE), cursor(initial), string(NULL),
-// 			  maxchar(127), last_maxchar(127), is_heap(false) {
-// 		}
-
-// 		inline ~MemoryBuffer() {
-// 			if (string != NULL) {
-// 				Py_CLEAR(string);
-// 			} else if (is_heap == true) {
-// 				ZiboJson_Free(start);
-// 			}
-// 		}
-
-// 		bool EnsureCapacity(Py_ssize_t required) {
-// 			register Py_ssize_t current_usage = cursor - start;
-// 			register Py_ssize_t new_size = end - start;
-// 			required += current_usage;
-
-// #ifdef NDEBUG
-// 			do {
-// 				new_size <<= 1;
-// 			} while (required > new_size);
-// #else
-// 			new_size = required; // allocate only the required size, for testing
-// #endif
-
-// 			if (sizeof(T) == 1) {
-// 				if (is_heap == true) {
-// 					if (PyUnicode_Resize(&string, new_size) != 0) {
-// 						assert(0);
-// 						return false;
-// 					}
-// 				} else {
-// 					string = NewString();
-// 					if (string == NULL) {
-// 						assert(0);
-// 						return false;
-// 					}
-// 					is_heap = true;
-// 				}
-// 				start = (T*) PyUnicode_1BYTE_DATA(string);
-// 			} else {
-// 				if (is_heap == true) {
-// 					start = (T*) ZiboJson_Realloc(start, sizeof(T) * new_size);
-// 					if (start == NULL) {
-// 						PyErr_NoMemory();
-// 						return false;
-// 					}
-// 				} else {
-// 					T* current_start = start;
-// 					start = (T*) ZiboJson_Malloc(sizeof(T) * new_size);
-// 					if (start == NULL) {
-// 						PyErr_NoMemory();
-// 						return false;
-// 					}
-// 					memcpy(start, current_start,
-// 						sizeof(T) == 1 ? current_usage :
-// 						sizeof(T) == 2 ? current_usage << 1 :
-// 						sizeof(T) == 4 ? current_usage << 2 :
-// 						sizeof(T) * current_usage);
-// 					is_heap = true;
-// 				}
-// 			}
-
-// 			cursor = start + current_usage;
-// 			end = start + new_size;
-// 			return true;
-// 		}
-
-// 		inline PyObject* NewString() {
-// 			printf("NewString is_heap=%i maxchar=%i last_maxchar=%i\n", is_heap, maxchar, last_maxchar);
-// 			// printf("UNUSED: %ld\n", end - cursor);
-// 			register Py_ssize_t l = cursor - start;
-
-// 			if (sizeof(T) == 1) {
-// 				if (is_heap == true && maxchar == last_maxchar) {
-// 					printf("GGGG: %s\n", PyUnicode_1BYTE_DATA(string));
-// 					if (PyUnicode_Resize(&string, l) == 0) {
-// 						printf("CCCC: %s\n", PyUnicode_1BYTE_DATA(string));
-
-// 						// assert(0);
-// 						Py_INCREF(string);
-// 						return string;
-// 					} else {
-// 						return NULL;
-// 					}
-// 				} else {
-// 					PyObject* str = PyUnicode_New(l, maxchar);
-// 					if (str == NULL) {
-// 						return NULL;
-// 					}
-// 					assert(PyUnicode_KIND(str) == PyUnicode_1BYTE_KIND);
-// 					memcpy(PyUnicode_DATA(str), start, l);
-// 					last_maxchar = maxchar;
-// 					return str;
-// 				}
-// 			} else {
-// 				PyObject* str = PyUnicode_New(l, maxchar);
-// 				if (str == NULL) {
-// 					return NULL;
-// 				}
-
-// 				switch (PyUnicode_KIND(str)) {
-// 					case PyUnicode_1BYTE_KIND:
-// 						if (sizeof(T) == 1) {
-// 							memcpy(PyUnicode_DATA(str), start, l);
-// 						} else {
-// 							#if ZIBO_JSON_USE_SSE
-// 								sse::string_copy(PyUnicode_1BYTE_DATA(str), start, l);
-// 							#else
-// 								register Py_UCS1* data = PyUnicode_1BYTE_DATA(str);
-// 								register T* buff = start;
-// 								while (l--) { data[l] = buff[l]; }
-// 							#endif
-// 						}
-// 					break;
-
-// 					case PyUnicode_2BYTE_KIND:
-// 						if (sizeof(T) == 2) {
-// 							memcpy(PyUnicode_DATA(str), start, l << 1);
-// 						} else {
-// 							#if ZIBO_JSON_USE_SSE
-// 								sse::string_copy(PyUnicode_2BYTE_DATA(str), start, l << 1);
-// 							#else
-// 								register Py_UCS2* data = PyUnicode_2BYTE_DATA(str);
-// 								register T* buff = start;
-// 								// TODO parallel pragma
-// 								while (l--) { data[l] = buff[l]; }
-// 							#endif
-// 						}
-// 					break;
-
-// 					case PyUnicode_4BYTE_KIND:
-// 						if (sizeof(T) == 4) {
-// 							memcpy(PyUnicode_DATA(str), start, l << 2);
-// 						} else {
-// 							#if ZIBO_JSON_USE_SSE
-// 								sse::string_copy(PyUnicode_4BYTE_DATA(str), start, l << 2);
-// 							#else
-// 								register Py_UCS4* data = PyUnicode_4BYTE_DATA(str);
-// 								register T* buff = start;
-// 								while (l--) { data[l] = buff[l]; }
-// 							#endif
-// 						}
-// 					break;
-// 				}
-// 				return str;
-// 			}
-// 		}
-// };
-
-
-
-
-
-
-
-
-
-
-
-// template<typename T>
-// class MemoryBuffer: public AbstractBuffer<MemoryBuffer, T> {
-// 	public:
-// 		inline explicit MemoryBuffer(T* initial)
-// 			: AbstractBuffer(initial) {
-// 		}
-// };
 
 
 template<typename T, size_t length>
 class FileBuffer: public MemoryBuffer<T, length> {
 	public:
+		typedef MemoryBuffer<T, length> Base;
+
 		PyObject* write;
 		// FILE fileno;
 
-		using MemoryBuffer<T, length>::MemoryBuffer;
+		using Base::MemoryBuffer;
 
 		inline ~FileBuffer() {
 			Py_CLEAR(write);
@@ -444,8 +135,8 @@ class FileBuffer: public MemoryBuffer<T, length> {
 					return false;
 				}
 				Py_DECREF(res);
-				// this->cursor = this->start;
-				// this->maxchar = 127;
+				this->cursor = this->start;
+				this->maxchar = 127;
 			}
 			return true;
 		}
@@ -453,7 +144,7 @@ class FileBuffer: public MemoryBuffer<T, length> {
 		bool EnsureCapacity(Py_ssize_t required) {
 			if (EXPECT_TRUE(Flush())) {
 				if (this->end - this->start < required) {
-					return MemoryBuffer<T, length>::EnsureCapacity(required);
+					return Base::EnsureCapacity(required);
 				} else {
 					return true;
 				}
@@ -464,21 +155,177 @@ class FileBuffer: public MemoryBuffer<T, length> {
 };
 
 
-#define ZiboJson_Buffer_IncMaxchar(buffer, ch) \
-	if ((ch) > ZiboJson_Buffer_EXTASCII_FROM) { \
-		if ((ch) > ZiboJson_Buffer_2B_FROM) { \
-			if ((ch) > ZiboJson_Buffer_4B_FROM) { \
-				(buffer).maxchar = ZiboJson_Buffer_4B_MAXCHAR; \
-			} else { \
-				(buffer).maxchar |= ZiboJson_Buffer_2B_MAXCHAR; \
-			} \
-		} else { \
-			(buffer).maxchar |= ZiboJson_Buffer_1B_MAXCHAR; \
-		} \
-	}
 
-#define ZiboJson_Buffer_HighestMaxChar(ch) \
-	((ch) > ZiboJson_Buffer_4B_FROM ? ZiboJson_Buffer_4B_MAXCHAR : ZiboJson_Buffer_2B_MAXCHAR)
+enum ChunkKind {
+	Chunk_1BYTE_KIND,
+	Chunk_2BYTE_KIND,
+	Chunk_4BYTE_KIND,
+	Chunk_CHAR_KIND
+};
+
+template<typename T>
+struct ChunkKindByType;
+
+template<>
+struct ChunkKindByType<Py_UCS1> { static const ChunkKind Kind = Chunk_1BYTE_KIND; };
+
+template<>
+struct ChunkKindByType<Py_UCS2> { static const ChunkKind Kind = Chunk_2BYTE_KIND; };
+
+template<>
+struct ChunkKindByType<Py_UCS4> { static const ChunkKind Kind = Chunk_4BYTE_KIND; };
+
+
+// template<typename CHAR_T>
+class ChunkBuffer {
+	public:
+		struct Chunk {
+			void* data;
+			Py_ssize_t length;
+			ChunkKind kind;
+		};
+
+		Chunk initial[256];
+		Chunk* chunksBegin;
+		Chunk* chunksEnd;
+		Chunk* chunk;
+
+		Py_ssize_t totalLength;
+
+		inline ChunkBuffer()
+			: chunksBegin(initial), chunksEnd(initial + 256), chunk(initial),
+			  totalLength(0) {
+
+		}
+
+		inline ~ChunkBuffer() {
+			if (initial != chunksBegin) {
+				ZiboJson_Free(chunksBegin);
+			}
+		}
+
+		template<typename T>
+		inline void StartSlice(T* start) {
+			chunk->data = start;
+			chunk->kind = ChunkKindByType<T>::Kind;
+		}
+
+		template<typename T>
+		inline bool CloseSlice(T* end) {
+			assert(chunk->kind == ChunkKindByType<T>::Kind);
+			totalLength += (chunk->length = end - (T*)(chunk->data));
+			return GotoNextChunk();
+		}
+
+		template<typename T>
+		inline bool AppendChar(T ch) {
+			chunk->length = ch;
+			chunk->kind = Chunk_CHAR_KIND;
+			++totalLength;
+			return GotoNextChunk();
+		}
+
+		PyObject* NewString(Py_ssize_t maxchar) {
+			PyObject* str = PyUnicode_New(totalLength, maxchar);
+			if (str == NULL) {
+				return str;
+			}
+
+			switch (PyUnicode_KIND(str)) {
+				case PyUnicode_1BYTE_KIND:
+					Write(PyUnicode_1BYTE_DATA(str));
+				break;
+
+				case PyUnicode_2BYTE_KIND:
+					Write(PyUnicode_2BYTE_DATA(str));
+				break;
+
+				default:
+					assert(PyUnicode_KIND(str) == PyUnicode_4BYTE_KIND);
+					Write(PyUnicode_4BYTE_DATA(str));
+				break;
+			}
+			// chunk = chunksBegin;
+			// totalLength = 0;
+			return str;
+		}
+
+		template<typename O>
+		inline void Write(O* target) const {
+			register Chunk* c = chunksBegin;
+
+			while (c < chunk) {
+				switch (c->kind) {
+					case Chunk_1BYTE_KIND:
+						WriteChunk<Py_UCS1, O>(c, target, &target);
+					break;
+
+					case Chunk_2BYTE_KIND:
+						WriteChunk<Py_UCS2, O>(c, target, &target);
+					break;
+
+					case Chunk_4BYTE_KIND:
+						WriteChunk<Py_UCS4, O>(c, target, &target);
+					break;
+
+					case Chunk_CHAR_KIND:
+						*(target++) = (O) c->length;
+					break;
+				}
+				++c;
+			}
+		}
+
+		inline void Reset() {
+			chunk = chunksBegin;
+			totalLength = 0;
+		}
+
+	private:
+		template<typename I, typename O>
+		inline void WriteChunk(Chunk* chunk, register O* target, O** targetOut) const {
+			if (sizeof(I) == sizeof(O)) {
+				memmove(target, chunk->data, chunk->length * sizeof(I));
+				*targetOut = target + chunk->length;
+			} else {
+				register I* data = (I*) chunk->data;
+				register Py_ssize_t l = chunk->length;
+				while (l-- > 0) {
+					target[l] = data[l];
+				}
+				*targetOut = target + chunk->length;
+			}
+		}
+
+		inline bool GotoNextChunk() {
+			return (++chunk >= chunksEnd ? Resize() : true);
+		}
+
+		bool Resize() {
+			size_t consumed = chunk - chunksBegin;
+			size_t l = (chunksEnd - chunksBegin) << 1;
+			if (initial == chunksBegin) {
+				chunksBegin = (Chunk*) ZiboJson_Malloc(sizeof(Chunk) * l);
+				if (chunksBegin == NULL) {
+					PyErr_NoMemory();
+					return NULL;
+				}
+				memmove(chunksBegin, initial, sizeof(Chunk) * l);
+			} else {
+				chunksBegin = (Chunk*) ZiboJson_Realloc(chunksBegin, sizeof(Chunk) * l);
+				if (chunksBegin == NULL) {
+					PyErr_NoMemory();
+					return NULL;
+				}
+			}
+
+			chunk = chunksBegin + consumed;
+			chunksEnd = chunksBegin + l;
+			return true;
+		}
+};
+
+
 
 } /* end namespace ZiboJson */
 

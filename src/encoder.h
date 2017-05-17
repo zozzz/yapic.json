@@ -212,9 +212,7 @@ class Encoder {
 		inline void __encode_string(const CHIN* input, const CHIN* end) {
 			// printf("AAA %ld -> %ld\n", sizeof(CHIN), sizeof(CHOUT));
 			register CHOUT* out = buffer.cursor;
-			#if !ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
 			register CHOUT maxchar = buffer.maxchar;
-			#endif
 
 			for (;;) {
 				if (*input < 127) { // ASCII -> ASCII | UNICODE
@@ -233,6 +231,7 @@ class Encoder {
 							case 0:
 								if (input >= end) {
 									buffer.cursor = --out;
+									buffer.maxchar = maxchar;
 									return;
 								}
 							default:
@@ -282,11 +281,7 @@ class Encoder {
 					StringEncoder_AppendChar(HEX_CHAR( (ch >> 4) & 0xF ));
 					StringEncoder_AppendChar(HEX_CHAR( ch & 0xF ));
 				} else if (sizeof(CHOUT) > 1) { // UNICODE -> UNICODE
-					#if !ZIBO_JSON_BUFFER_INTERNAL_MAXCHAR
-					if (maxchar < *input) {
-						buffer.maxchar = maxchar = *input;
-					}
-					#endif
+					maxchar |= *input;
 					StringEncoder_AppendChar(*(input++));
 				} else {
 					assert(0);
@@ -669,18 +664,6 @@ class Encoder {
 			Encoder_RETURN_FALSE;
 		}
 };
-
-
-// template<typename CHOUT>
-// class MemoryEncoder: public AbstractEncoder<MemoryEncoder, CHOUT> {
-
-// }
-
-
-// template<typename CHOUT>
-// class FileEncoder: public AbstractEncoder<FileEncoder, CHOUT> {
-
-// }
 
 
 } /* namespace ZiboJson */

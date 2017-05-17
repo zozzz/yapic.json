@@ -18,12 +18,7 @@ libs/double-conversion/double-conversion/ieee.h
 libs/double-conversion/double-conversion/strtod.cc
 libs/double-conversion/double-conversion/strtod.h
 libs/double-conversion/double-conversion/utils.h
-src/_decoder.h
-src/_encode_str_smid.h
-src/_encoder.h
-src/_encoder_str.h
 src/buffer.h
-src/chunk-buffer.h
 src/config.h
 src/decoder.h
 src/dict_generator.h
@@ -33,13 +28,6 @@ src/globals.h
 src/homogene_list.h
 src/json.cpp
 src/json.h
-src/ms_stdint.h
-src/number-parser.h
 src/pystring.h
 src/sse.h
-src/str_decode_table.h
-src/str_encode_ascii.h
-src/str_encode_jump.h
-src/str_encode_state.h
-src/str_encode_table.h
 src/util.h

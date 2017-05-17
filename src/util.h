@@ -7,21 +7,43 @@
 
 namespace ZiboJson {
 
-/*
-static inline PyObject* CallPyFunction1Arg(PyObject* callable, PyObject* arg) {
-	PyObject* args = PyTuple_New(1);
-	Py_INCREF(arg);
-	PyTuple_SET_ITEM(args, 0, arg);
-	PyObject* res = PyObject_Call(callable, args, NULL);
 
-	assert(((PyObject *)args)->ob_refcnt == 1);
-	assert(((PyObject *)arg)->ob_refcnt > 1);
+#define __bytelength(T, l) \
+	(sizeof(T) == 1 ? l : sizeof(T) == 2 ? l << 1 : l << 2)
 
-	Py_DECREF(args);
 
-	return res;
+template<typename I, typename O, typename S>
+static inline void CopyBytes(O* dest, const I* input, S length) {
+	assert(dest != NULL);
+	assert(input != NULL);
+	assert(sizeof(I) == 1 || sizeof(I) == 2 || sizeof(I) == 4);
+
+	if (sizeof(I) == sizeof(O)) {
+		memcpy(dest, input, __bytelength(I, length));
+	} else {
+		while (length-- > 0) {
+			dest[length] = input[length];
+		}
+	}
 }
-*/
+
+
+template<typename I, typename O, typename S>
+static inline void MoveBytes(O* dest, const I* input, S length) {
+	assert(dest != NULL);
+	assert(input != NULL);
+	assert(sizeof(I) == 1 || sizeof(I) == 2 || sizeof(I) == 4);
+
+	if (sizeof(I) == sizeof(O)) {
+		memmove(dest, input, __bytelength(I, length));
+	} else {
+		while (length-- > 0) {
+			dest[length] = input[length];
+		}
+	}
+}
+
+#undef __bytelength
 
 } /* end namespace ZiboJson */
 
