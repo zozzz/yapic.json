@@ -248,7 +248,7 @@ class ChunkBuffer {
 		inline void Write(O* target) const {
 			register Chunk* c = chunksBegin;
 
-			while (c++ < chunk) {
+			for (; c < chunk ; c++) {
 				switch (c->kind) {
 					case Chunk_1BYTE_KIND:
 						CopyBytes(target, (Py_UCS1*) c->data, c->length);
@@ -268,6 +268,12 @@ class ChunkBuffer {
 					case Chunk_CHAR_KIND:
 						*(target++) = (O) c->length;
 					break;
+
+					#if !NDEBUG
+					default:
+						assert(0);
+					break;
+					#endif
 				}
 			}
 		}
@@ -289,14 +295,14 @@ class ChunkBuffer {
 				chunksBegin = (Chunk*) ZiboJson_Malloc(sizeof(Chunk) * l);
 				if (chunksBegin == NULL) {
 					PyErr_NoMemory();
-					return NULL;
+					return false;
 				}
-				memmove(chunksBegin, initial, sizeof(Chunk) * l);
+				memmove(chunksBegin, initial, sizeof(Chunk) * consumed);
 			} else {
 				chunksBegin = (Chunk*) ZiboJson_Realloc(chunksBegin, sizeof(Chunk) * l);
 				if (chunksBegin == NULL) {
 					PyErr_NoMemory();
-					return NULL;
+					return false;
 				}
 			}
 

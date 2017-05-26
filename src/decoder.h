@@ -153,7 +153,7 @@ class Decoder {
 			register CHOUT maxchar = 127;
 
 			while (cursor < inputEnd) {
-				// printf("cursor = %ld end = %ld L = %ld\n", cursor, end, end - cursor);
+				// printf("C = %ld cursor = %ld end = %ld L = %ld\n", *cursor, cursor, inputEnd, inputEnd - cursor);
 
 				if (*cursor == '"') {
 					goto success;

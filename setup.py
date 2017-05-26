@@ -7,8 +7,7 @@ from os import path
 from distutils.core import setup, Extension
 
 DEVELOP = os.environ.get("DEBUG") == "1"
-__version__ = "1.0.0"
-
+VERSION = "1.0.0"
 
 sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
@@ -22,9 +21,9 @@ extension = Extension(
     #     "src"
     # ],
     define_macros=[
-        ("ZIBO_JSON_VERSION_MAJOR", __version__.split(".")[0]),
-        ("ZIBO_JSON_VERSION_MINOR", __version__.split(".")[1]),
-        ("ZIBO_JSON_VERSION_PATCH", __version__.split(".")[2]),
+        ("ZIBO_JSON_VERSION_MAJOR", VERSION.split(".")[0]),
+        ("ZIBO_JSON_VERSION_MINOR", VERSION.split(".")[1]),
+        ("ZIBO_JSON_VERSION_PATCH", VERSION.split(".")[2]),
         ("ZIBO_JSON_USE_SSE", 0),
         ("NDEBUG", 1)
     ],
@@ -36,7 +35,7 @@ extension = Extension(
 setup(
     name="zibo.json",
     ext_modules=[extension],
-    version=__version__,
+    version=VERSION,
     description="Fastest JSON encode / decode library.",
     author="Vetési Zoltán",
     author_email="vetesi.zoltan@gmail.com",

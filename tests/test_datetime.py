@@ -9,9 +9,6 @@ class TZInfo(datetime.tzinfo):
     def __init__(self, offset):
         self.offset = offset
 
-    def dst(self, date):
-        return datetime.timedelta(seconds=0)
-
     def utcoffset(self, date):
         return datetime.timedelta(seconds=self.offset)
 
@@ -33,7 +30,7 @@ class TZInfo(datetime.tzinfo):
     (datetime.datetime(2017, 4, 1, 12, 23, 45, 123, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.123-01:00"'),
     (datetime.datetime(2017, 4, 1, 12, 23, 45, 23, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.023-01:00"'),
     (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.003-01:00"'),
-    (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.003-01:30"'),
+    (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.003-01:30"')
 ])
 def test_datetime_encode(value, expected, ensure_ascii):
     assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
