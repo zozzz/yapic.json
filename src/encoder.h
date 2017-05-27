@@ -216,13 +216,21 @@ class Encoder {
 
 			for (;;) {
 				if (*input < 127) { // ASCII -> ASCII | UNICODE
-					if (*input > 31 && *input != '\\' && *input != '"') {
-						StringEncoder_AppendChar(*(input++));
+					if (*input > 31) {
+						if (*input == '\\') {
+							StringEncoder_AppendChar('\\');
+							StringEncoder_AppendChar('\\');
+							++input;
+						} else if (*input == '"') {
+							StringEncoder_AppendChar('\\');
+							StringEncoder_AppendChar('"');
+							++input;
+						} else {
+							StringEncoder_AppendChar(*(input++));
+						}
 					} else {
 						StringEncoder_AppendChar('\\');
 						switch (*input) {
-							case '"': StringEncoder_AppendChar('"'); break;
-							case '\\': StringEncoder_AppendChar('\\'); break;
 							case '\r': StringEncoder_AppendChar('r'); break;
 							case '\n': StringEncoder_AppendChar('n'); break;
 							case '\t': StringEncoder_AppendChar('t'); break;

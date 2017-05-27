@@ -249,7 +249,7 @@ class Table:
             for x in self.columns:
                 err_max_length += x[2]
             row_template = "\r    {0:<%s}error: {1:<%s}\n" % (self.columns[0][2], err_max_length)
-            self._write(colored(row_template.format(title, str(data)), "white", "on_red"))
+            self._write(colored(row_template.format(title, str(data)[0:err_max_length]), "white", "on_red"))
         else:
             self.row_data.append(dict(title=title, data=data))
             row = "\r"

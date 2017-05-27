@@ -346,6 +346,19 @@ class ListOfStringsAscii(Benchmark):
         return res
 
 
+class ListOfStringsAsciiToUnicode(Benchmark):
+    """ List of ascii strings -> unicode"""
+
+    ITERATIONS = 100
+    ENSURE_ASCII = False
+
+    def get_encode_data(self):
+        res = []
+        for x in range(256):
+            res.append("ABCDE" * 40)
+        return res
+
+
 class ListOfStrings2BUnicodeToAscii(Benchmark):
     """ List of 2 byte unicode strings -> ascii"""
 
@@ -425,7 +438,7 @@ class ListOfDateTimeWithTZInfo(Benchmark):
     DECODER = LatencyDateTime.DECODER
 
     def get_encode_data(self):
-        return [datetime(2017, 4, 3, 21, 40, 12, tzinfo=timezone(timedelta(7200))) for i in range(100)]
+        return [datetime(2017, 4, 3, 21, 40, 12, tzinfo=timezone(timedelta(seconds=7200))) for i in range(100)]
 
     def get_decode_data(self):
         return py_json.dumps(['"2017-04-03T21:40:12+02:00"' for i in range(100)], separators=(",", ":"))
