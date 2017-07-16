@@ -1,6 +1,8 @@
 #ifndef DEFBD7C4_2133_C63D_128D_F5D3D59111EF
 #define DEFBD7C4_2133_C63D_128D_F5D3D59111EF
 
+#include <limits>
+
 
 #include "../libs/double-conversion/double-conversion/double-conversion.h"
 #include "config.h"
@@ -226,6 +228,7 @@ class Encoder {
 							StringEncoder_AppendChar('"');
 							++input;
 						} else {
+							#pragma warning(suppress: 4244)
 							StringEncoder_AppendChar(*(input++));
 						}
 					} else {
@@ -300,22 +303,30 @@ class Encoder {
 		}
 
 		Encoder_FN(EncodeLong) {
-			Encoder_EnsureCapacity(LONG_MAX_LENGTH_IN_CHR + Encoder_EXTRA_CAPACITY);
-			register long value = PyLong_AS_LONG(obj);
-			register unsigned long abs_value = value;
+			int is_overflow = 0;
+			register long long value = PyLong_AsLongLongAndOverflow(obj, &is_overflow);
+
+			if (is_overflow != 0) {
+				PyErr_SetString(EncodeError, ZiboJson_Err_IntOverflow);
+				return NULL;
+			}
+
+			Encoder_EnsureCapacity(LLONG_MAX_LENGTH_IN_CHR + Encoder_EXTRA_CAPACITY);
+			register unsigned long long abs_value = value;
 
 			if (value < 0) {
 				abs_value = -value;
 				Encoder_AppendFast('-');
 			}
 
-			register CHOUT *end_position = buffer.cursor + LONG_MAX_LENGTH_IN_CHR;
+			register CHOUT *end_position = buffer.cursor + LLONG_MAX_LENGTH_IN_CHR;
 			register CHOUT *saved_end_position = end_position;
 
 			do {
 				*(--end_position) = (48 + (abs_value % 10));
 			} while ((abs_value /= 10) > 0);
 
+			#pragma warning(suppress: 4244)
 			abs_value = saved_end_position - end_position;
 
 			memmove(buffer.cursor, end_position, sizeof(CHOUT) * abs_value);

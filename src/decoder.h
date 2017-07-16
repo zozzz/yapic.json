@@ -8,6 +8,8 @@
 #include "config.h"
 #include "buffer.h"
 
+#undef min
+#undef max
 
 #define Decoder_Error(msg) \
 	PyErr_Format(DecodeError, msg " at position: %ld.", cursor - inputStart)
@@ -554,7 +556,7 @@ class Decoder {
 					} while (*cursor >= '0' && *cursor <= '9' && floatData < floatDataEnd);
 				} else if (Trait::CheckOverflow(intValue)) {
 					*cursorOut = cursor;
-					return PyLong_FromLong(intValue);
+					return PyLong_FromLongLong(intValue);
 				}
 			} else if (*cursor == '0') {
 				++cursor;

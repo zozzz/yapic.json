@@ -11,6 +11,7 @@
 #define ZiboJson_Err_MaxRecursion_JsonMethod "encoding %R with '%U' method."
 #define ZiboJson_Err_MaxRecursion_Default "encoding %R with default function."
 #define ZiboJson_Err_InvalidDictKey "This %R is an invalid dict key, please provide the 'default' function or define the %A method in class."
+#define ZiboJson_Err_IntOverflow "Python int too large to convert to C long."
 
 #define ZiboJson_Err_UnexpectedEnd "Unexpected end of data"
 #define ZiboJson_Err_UnexpectedChar "Unexpected charcter: '%c'"

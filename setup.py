@@ -28,7 +28,8 @@ extension = Extension(
         ("NDEBUG", 1)
     ],
     undef_macros=(["NDEBUG"] if DEVELOP else None),
-    extra_compile_args=["-msse4.2", "-std=c++11"],
+    # extra_compile_args=["-msse4.2", "-std=c++11"],
+    extra_compile_args=[] if os.name == "nt" else ["-std=c++11"],
     # extra_compile_args=["-std=c++11"],
 )
 

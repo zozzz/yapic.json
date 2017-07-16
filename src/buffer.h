@@ -223,7 +223,7 @@ class ChunkBuffer {
 			return GotoNextChunk();
 		}
 
-		PyObject* NewString(Py_ssize_t maxchar) {
+		PyObject* NewString(Py_UCS4 maxchar) {
 			PyObject* str = PyUnicode_New(totalLength, maxchar);
 			if (str != NULL) {
 				switch (PyUnicode_KIND(str)) {

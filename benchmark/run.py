@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from os import path
 from io import StringIO
 from datetime import timezone, timedelta
 import math
 import decimal
+import codecs
 
 import json as py_json
 import simplejson
@@ -450,7 +453,7 @@ class LargeDataToAscii(Benchmark):
     ITERATIONS = 100
 
     def get_encode_data(self):
-        with open(path.join(path.dirname(__file__), "large-data.json"), "r") as f:
+        with codecs.open(path.join(path.dirname(__file__), "large-data.json"), "r", "utf-8") as f:
             return py_json.load(f)
 
 

@@ -17,6 +17,12 @@ def test_long_encode(value, ensure_ascii, expected):
     assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
+def test_long_encode_overflow(ensure_ascii):
+    with pytest.raises(zibo_json.JsonEncodeError) as ex:
+        zibo_json.dumps(9223372036854775808, ensure_ascii=ensure_ascii)
+    ex.match("Python int too large to convert to C long.")
+
+
 @pytest.mark.parametrize("expected,value", CASES)
 def test_long_decode(value, expected):
     assert zibo_json.loads(value) == expected

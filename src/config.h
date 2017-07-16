@@ -60,21 +60,11 @@
 
 
 /**
- * Maximum recursion depth (disabling checking is not allowed)
+ * Maximum recursion depth
  */
 #define MAXIMUM_RECURSION_DEPTH 	1000
-
-#if LONG_BIT == 64
-#	define LONG_MAX_LENGTH_IN_CHR 20
-#elif LONG_BIT == 32
-#	define LONG_MAX_LENGTH_IN_CHR 11
-#elif LONG_BIT == 16
-#	define LONG_MAX_LENGTH_IN_CHR 6
-#else
-#	error "Unsupported long size"
-#endif
-
-#define DOUBLE_MAX_LENGTH_IN_CHR  122
+#define LLONG_MAX_LENGTH_IN_CHR 	20
+#define DOUBLE_MAX_LENGTH_IN_CHR  	122
 
 #ifdef NDEBUG
 #	define ZiboLog(msg) ((void)0)
