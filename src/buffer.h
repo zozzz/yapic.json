@@ -6,15 +6,15 @@
 #include "globals.h"
 
 
-namespace ZiboJson {
+namespace Yapic { namespace Json {
 
-#define ZiboJson_Buffer_ASCII_MAXCHAR 	0x7F
-#define ZiboJson_Buffer_EXTASCII_FROM	ZiboJson_Buffer_ASCII_MAXCHAR
-#define ZiboJson_Buffer_1B_MAXCHAR 		0xFF
-#define ZiboJson_Buffer_2B_FROM 		ZiboJson_Buffer_1B_MAXCHAR
-#define ZiboJson_Buffer_2B_MAXCHAR 		0xFFFF
-#define ZiboJson_Buffer_4B_FROM 		ZiboJson_Buffer_2B_MAXCHAR
-#define ZiboJson_Buffer_4B_MAXCHAR 		0x10FFFF
+#define YapicJson_Buffer_ASCII_MAXCHAR 	0x7F
+#define YapicJson_Buffer_EXTASCII_FROM	YapicJson_Buffer_ASCII_MAXCHAR
+#define YapicJson_Buffer_1B_MAXCHAR 		0xFF
+#define YapicJson_Buffer_2B_FROM 		YapicJson_Buffer_1B_MAXCHAR
+#define YapicJson_Buffer_2B_MAXCHAR 		0xFFFF
+#define YapicJson_Buffer_4B_FROM 		YapicJson_Buffer_2B_MAXCHAR
+#define YapicJson_Buffer_4B_MAXCHAR 		0x10FFFF
 
 
 template<typename T, size_t length>
@@ -36,7 +36,7 @@ class MemoryBuffer {
 
 		inline ~MemoryBuffer() {
 			if (is_heap == true) {
-				ZiboJson_Free(start);
+				YapicJson_Free(start);
 			}
 		}
 
@@ -54,14 +54,14 @@ class MemoryBuffer {
 #endif
 
 			if (is_heap == true) {
-				start = (T*) ZiboJson_Realloc(start, sizeof(T) * new_size);
+				start = (T*) YapicJson_Realloc(start, sizeof(T) * new_size);
 				if (start == NULL) {
 					PyErr_NoMemory();
 					return false;
 				}
 			} else {
 				T* current_start = start;
-				start = (T*) ZiboJson_Malloc(sizeof(T) * new_size);
+				start = (T*) YapicJson_Malloc(sizeof(T) * new_size);
 				if (start == NULL) {
 					PyErr_NoMemory();
 					return false;
@@ -183,7 +183,7 @@ class ChunkBuffer {
 			ChunkKind kind;
 		};
 
-		Chunk initial[ZIBO_JSON_CHUNK_BUFFER_SIZE];
+		Chunk initial[YAPIC_JSON_CHUNK_BUFFER_SIZE];
 		Chunk* chunksBegin;
 		Chunk* chunksEnd;
 		Chunk* chunk;
@@ -191,14 +191,14 @@ class ChunkBuffer {
 		Py_ssize_t totalLength;
 
 		inline ChunkBuffer()
-			: chunksBegin(initial), chunksEnd(initial + ZIBO_JSON_CHUNK_BUFFER_SIZE), chunk(initial),
+			: chunksBegin(initial), chunksEnd(initial + YAPIC_JSON_CHUNK_BUFFER_SIZE), chunk(initial),
 			  totalLength(0) {
 
 		}
 
 		inline ~ChunkBuffer() {
 			if (initial != chunksBegin) {
-				ZiboJson_Free(chunksBegin);
+				YapicJson_Free(chunksBegin);
 			}
 		}
 
@@ -292,14 +292,14 @@ class ChunkBuffer {
 			size_t consumed = chunk - chunksBegin;
 			size_t l = (chunksEnd - chunksBegin) << 1;
 			if (initial == chunksBegin) {
-				chunksBegin = (Chunk*) ZiboJson_Malloc(sizeof(Chunk) * l);
+				chunksBegin = (Chunk*) YapicJson_Malloc(sizeof(Chunk) * l);
 				if (chunksBegin == NULL) {
 					PyErr_NoMemory();
 					return false;
 				}
 				memmove(chunksBegin, initial, sizeof(Chunk) * consumed);
 			} else {
-				chunksBegin = (Chunk*) ZiboJson_Realloc(chunksBegin, sizeof(Chunk) * l);
+				chunksBegin = (Chunk*) YapicJson_Realloc(chunksBegin, sizeof(Chunk) * l);
 				if (chunksBegin == NULL) {
 					PyErr_NoMemory();
 					return false;
@@ -314,6 +314,7 @@ class ChunkBuffer {
 
 
 
-} /* end namespace ZiboJson */
+} /* end namespace Json */
+} /* end namespace Yapic */
 
 #endif /* B7EE312A_D133_C640_1522_C4EFC8BF6F71 */

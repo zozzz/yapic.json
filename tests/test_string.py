@@ -2,7 +2,7 @@
 import pytest
 
 import json as py_json
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 # TODO: test surrogate pairs
 
@@ -30,7 +30,7 @@ def unicode_chars(request):
 def test_encode_chars(unicode_chars, ensure_ascii):
     for chc in unicode_chars:
         ch = chr(chc)
-        assert zibo_json.dumps(ch, ensure_ascii=ensure_ascii) == py_json.dumps(ch, ensure_ascii=ensure_ascii), chc
+        assert yapic_json.dumps(ch, ensure_ascii=ensure_ascii) == py_json.dumps(ch, ensure_ascii=ensure_ascii), chc
 
 
 def test_decode_chars(unicode_chars, ensure_ascii):
@@ -38,10 +38,10 @@ def test_decode_chars(unicode_chars, ensure_ascii):
         ch = chr(chc)
         json_ch = py_json.dumps(ch, ensure_ascii=ensure_ascii)
         if ensure_ascii and chc >= 0xD800 and chc <= 0xDFFF:  # invalid unicode escape
-            with pytest.raises(zibo_json.JsonDecodeError):
-                zibo_json.loads(json_ch)
+            with pytest.raises(yapic_json.JsonDecodeError):
+                yapic_json.loads(json_ch)
         else:
-            assert zibo_json.loads(json_ch) == py_json.loads(json_ch), json_ch
+            assert yapic_json.loads(json_ch) == py_json.loads(json_ch), json_ch
 
 
 @pytest.mark.parametrize(
@@ -61,7 +61,7 @@ def test_decode_chars(unicode_chars, ensure_ascii):
         "Escaped chars"
     ])
 def test_encode_string(value, ensure_ascii):
-    zv = zibo_json.dumps(value, ensure_ascii=ensure_ascii)
+    zv = yapic_json.dumps(value, ensure_ascii=ensure_ascii)
     pv = py_json.dumps(value, ensure_ascii=ensure_ascii)
     assert len(zv) == len(pv)
     assert zv == pv
@@ -88,58 +88,58 @@ def test_encode_string(value, ensure_ascii):
 def test_decode_string(value, ensure_ascii):
     expected = value
     value = py_json.dumps(value, ensure_ascii=True)
-    assert zibo_json.loads(value) == expected
+    assert yapic_json.loads(value) == expected
 
 
 def test_decode_unterminated():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"Hello')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"Hello')
     ex.match("Unexpected end of data at position: 6.")
 
 
 def test_decode_unterminated2():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\')
     ex.match("Unexpected end of data at position: 2.")
 
 
 def test_decode_unterminated3():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u')
     ex.match("Unexpected end of data at position: 3.")
 
 
 def test_decode_unterminated4():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u0')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u0')
     ex.match("Unexpected end of data at position: 4.")
 
 
 def test_decode_unterminated5():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u00')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u00')
     ex.match("Unexpected end of data at position: 5.")
 
 
 def test_decode_unterminated6():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u000')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u000')
     ex.match("Unexpected end of data at position: 6.")
 
 
 def test_decode_unterminated7():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u0000')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u0000')
     ex.match("Unexpected end of data at position: 7.")
 
 
 def test_decode_unterminated8():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\u00000')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u00000')
     ex.match("Unexpected end of data at position: 8.")
 
 
 def test_decode_invalid_escape():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('"\\g')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\g')
     ex.match("Invalid escaped character while decoding 'string' at position: 2.")

@@ -3,7 +3,7 @@ import pytest
 import json as py_json
 import ujson
 import simplejson
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 
 @pytest.fixture(
@@ -11,10 +11,10 @@ from zibo import json as zibo_json
         py_json.dumps,
         ujson.dumps,
         simplejson.dumps,
-        zibo_json.dumps
+        yapic_json.dumps
     ],
     ids=[
-        "ZIBO",
+        "YAPIC",
         "PYTHON",
         "UJSON",
         "SIMPLEJSON"

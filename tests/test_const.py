@@ -1,6 +1,6 @@
 import pytest
 import math
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -12,7 +12,7 @@ from zibo import json as zibo_json
     (float("-infinity"), "-Infinity"),
 ])
 def test_const_encode(value, expected, ensure_ascii):
-    assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -23,8 +23,8 @@ def test_const_encode(value, expected, ensure_ascii):
     ("-Infinity", float("-infinity")),
 ])
 def test_const_decode(value, expected):
-    assert zibo_json.loads(value) == expected
+    assert yapic_json.loads(value) == expected
 
 
 def test_nan_decode():
-    assert math.isnan(zibo_json.loads("NaN"))
+    assert math.isnan(yapic_json.loads("NaN"))

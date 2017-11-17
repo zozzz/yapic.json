@@ -13,7 +13,7 @@ sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
 
 extension = Extension(
-    name="zibo.json",
+    name="yapic.json",
     library_dirs=[path.join(sys.prefix, "libs")],
     language="c++",
     sources=sources,
@@ -21,10 +21,10 @@ extension = Extension(
     #     "src"
     # ],
     define_macros=[
-        ("ZIBO_JSON_VERSION_MAJOR", VERSION.split(".")[0]),
-        ("ZIBO_JSON_VERSION_MINOR", VERSION.split(".")[1]),
-        ("ZIBO_JSON_VERSION_PATCH", VERSION.split(".")[2]),
-        ("ZIBO_JSON_USE_SSE", 0),
+        ("YAPIC_JSON_VERSION_MAJOR", VERSION.split(".")[0]),
+        ("YAPIC_JSON_VERSION_MINOR", VERSION.split(".")[1]),
+        ("YAPIC_JSON_VERSION_PATCH", VERSION.split(".")[2]),
+        ("YAPIC_JSON_USE_SSE", 0),
         ("NDEBUG", 1)
     ],
     undef_macros=(["NDEBUG"] if DEVELOP else None),
@@ -34,7 +34,7 @@ extension = Extension(
 )
 
 setup(
-    name="zibo.json",
+    name="yapic.json",
     ext_modules=[extension],
     version=VERSION,
     description="Fastest JSON encode / decode library.",

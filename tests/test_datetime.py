@@ -1,7 +1,7 @@
 import pytest
 import datetime
 from datetime import timezone
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 import json as py_json
 
 
@@ -33,7 +33,7 @@ class TZInfo(datetime.tzinfo):
     (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.003-01:30"')
 ])
 def test_datetime_encode(value, expected, ensure_ascii):
-    assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
 class WrongTZ(datetime.tzinfo):
@@ -42,7 +42,7 @@ class WrongTZ(datetime.tzinfo):
 
 def test_datetime_encode_wtz(ensure_ascii):
     with pytest.raises(Exception) as ex:
-        zibo_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ()))
+        yapic_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ()))
 
 
 class WrongTZ2(datetime.tzinfo):
@@ -52,7 +52,7 @@ class WrongTZ2(datetime.tzinfo):
 
 def test_datetime_encode_wtz2(ensure_ascii):
     with pytest.raises(Exception) as ex:
-        zibo_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ2()))
+        yapic_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ2()))
 
 
 def __tz(sec):
@@ -90,7 +90,7 @@ def __tz(sec):
 
 ])
 def test_datetime_decode(value, expected):
-    assert zibo_json.loads(value, parse_date=True) == expected
+    assert yapic_json.loads(value, parse_date=True) == expected
 
 
 @pytest.mark.parametrize("value", [
@@ -100,7 +100,7 @@ def test_datetime_decode(value, expected):
     '"1922-10-11S"',
 ])
 def test_datetime_decode_as_string(value):
-    assert zibo_json.loads(value, parse_date=True) == py_json.loads(value)
+    assert yapic_json.loads(value, parse_date=True) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("value", [
@@ -112,4 +112,4 @@ def test_datetime_decode_as_string(value):
 ])
 def test_datetime_decode_invalid(value):
     with pytest.raises(ValueError):
-        zibo_json.loads(value, parse_date=True)
+        yapic_json.loads(value, parse_date=True)

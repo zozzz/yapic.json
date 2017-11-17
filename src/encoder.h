@@ -10,7 +10,7 @@
 #include "globals.h"
 
 
-namespace ZiboJson {
+namespace Yapic { namespace Json {
 using namespace double_conversion;
 
 #define Encoder_RETURN_TRUE return true
@@ -38,7 +38,7 @@ using namespace double_conversion;
 	((assert(recursionDepth < maxRecursionDepth)), --recursionDepth)
 
 #define Encoder_RecursionError(msg, ...) \
-	PyErr_Format(EncodeError, ZiboJson_Err_MaxRecursion msg, __VA_ARGS__)
+	PyErr_Format(EncodeError, YapicJson_Err_MaxRecursion msg, __VA_ARGS__)
 
 #define Encoder_RecursionOccured() \
 	(recursionDepth > maxRecursionDepth && !PyErr_Occurred())
@@ -135,7 +135,7 @@ class Encoder {
 				return EncodeWithDefault<false>(obj);
 			}
 
-			PyErr_Format(EncodeError, ZiboJson_Err_NotSerializable, obj);
+			PyErr_Format(EncodeError, YapicJson_Err_NotSerializable, obj);
 			Encoder_RETURN_FALSE;
 		}
 
@@ -175,7 +175,7 @@ class Encoder {
 				return EncodeWithDefault<true>(obj);
 			}
 
-			PyErr_Format(EncodeError, ZiboJson_Err_InvalidDictKey, obj, toJsonMethodName);
+			PyErr_Format(EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
 			Encoder_RETURN_FALSE;
 		}
 
@@ -307,7 +307,7 @@ class Encoder {
 			register long long value = PyLong_AsLongLongAndOverflow(obj, &is_overflow);
 
 			if (is_overflow != 0) {
-				PyErr_SetString(EncodeError, ZiboJson_Err_IntOverflow);
+				PyErr_SetString(EncodeError, YapicJson_Err_IntOverflow);
 				return NULL;
 			}
 
@@ -527,11 +527,11 @@ class Encoder {
 					Encoder_AppendFast(':');
 					if (EXPECT_TRUE(Encode(value))) {
 						Encoder_AppendFast(',');
-					} else Encoder_HandleRecursion(ZiboJson_Err_MaxRecursion_DictValue, value, key)
+					} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_DictValue, value, key)
 					} else {
 						Encoder_RETURN_FALSE;
 					}
-				} else Encoder_HandleRecursion(ZiboJson_Err_MaxRecursion_DictKey, key)
+				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_DictKey, key)
 				} else {
 					Encoder_RETURN_FALSE;
 				}
@@ -554,7 +554,7 @@ class Encoder {
 			for (; i<length ; i++) {
 				if (Encode(PyList_GET_ITEM(obj, i))) {
 					Encoder_AppendFast(',');
-				} else Encoder_HandleRecursion(ZiboJson_Err_MaxRecursion_ListValue, PyList_GET_ITEM(obj, i), i)
+				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ListValue, PyList_GET_ITEM(obj, i), i)
 				} else {
 					Encoder_RETURN_FALSE;
 				}
@@ -580,7 +580,7 @@ class Encoder {
 			for (; i<length ; i++) {
 				if (Encode(PyTuple_GET_ITEM(obj, i))) {
 					Encoder_AppendFast(',');
-				} else Encoder_HandleRecursion(ZiboJson_Err_MaxRecursion_ListValue, PyTuple_GET_ITEM(obj, i), i)
+				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ListValue, PyTuple_GET_ITEM(obj, i), i)
 				} else {
 					Encoder_RETURN_FALSE;
 				}
@@ -615,7 +615,7 @@ class Encoder {
 					++length;
 				} else {
 					if (Encoder_RecursionOccured()) {
-						Encoder_RecursionError(ZiboJson_Err_MaxRecursion_IterValue, item, length);
+						Encoder_RecursionError(YapicJson_Err_MaxRecursion_IterValue, item, length);
 					}
 					Py_DECREF(iterator);
 					Py_DECREF(item);
@@ -653,7 +653,7 @@ class Encoder {
 			} else {
 				Py_DECREF(toJson);
 				if (Encoder_RecursionOccured()) {
-					Encoder_RecursionError(ZiboJson_Err_MaxRecursion_Default, obj);
+					Encoder_RecursionError(YapicJson_Err_MaxRecursion_Default, obj);
 				}
 			}
 
@@ -676,7 +676,7 @@ class Encoder {
 			} else {
 				Py_DECREF(toJson);
 				if (Encoder_RecursionOccured()) {
-					Encoder_RecursionError(ZiboJson_Err_MaxRecursion_JsonMethod, obj, toJsonMethodName);
+					Encoder_RecursionError(YapicJson_Err_MaxRecursion_JsonMethod, obj, toJsonMethodName);
 				}
 			}
 
@@ -685,6 +685,7 @@ class Encoder {
 };
 
 
-} /* namespace ZiboJson */
+} /* end namespace Json */
+} /* end namespace Yapic */
 
 #endif /* DEFBD7C4_2133_C63D_128D_F5D3D59111EF */

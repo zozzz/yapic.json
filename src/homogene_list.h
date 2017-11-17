@@ -1,7 +1,7 @@
 #ifndef F1CD3B20_F133_C6A6_CB3D_69E6D2C02DAA
 #define F1CD3B20_F133_C6A6_CB3D_69E6D2C02DAA
 
-namespace ZiboJson {
+namespace Yapic { namespace Json {
 
 
 typedef struct {
@@ -19,14 +19,14 @@ static PyObject* HomogeneList_Iter(PyObject* self) {
 		return NULL;
 	}
 	PyErr_Format(PyExc_NotImplementedError, "%U.__iter__", name);
-	// PyErr_SetString(PyExc_NotImplementedError, "zibo.json.HomogeneList.__iter__");
+	// PyErr_SetString(PyExc_NotImplementedError, "yapic.json.HomogeneList.__iter__");
 	return NULL;
 }
 
 
 static PyTypeObject HomogeneList_Type = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-    /* tp_name */ 			"zibo.json.HomogeneList",
+    /* tp_name */ 			"yapic.json.HomogeneList",
     /* tp_basicsize */ 		sizeof(HomogeneList),
     /* tp_itemsize */ 		0,
     /* tp_dealloc */ 		0,
@@ -67,6 +67,7 @@ static PyTypeObject HomogeneList_Type = {
 };
 
 
-} /* end namespace ZiboJson */
+} /* end namespace Json */
+} /* end namespace Yapic */
 
 #endif /* F1CD3B20_F133_C6A6_CB3D_69E6D2C02DAA */

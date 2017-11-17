@@ -11,7 +11,7 @@ import json as py_json
 import simplejson
 import ujson
 import rapidjson
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 from benchmark import Benchmark
 from datetime import datetime, tzinfo, timedelta
@@ -168,7 +168,7 @@ class LatencyDateTime(Benchmark):
     """ Latency: Datetime """
 
     DECODER = (
-        ("zibo", zibo_json.loads),
+        ("yapic", yapic_json.loads),
         ("rapidjson", rapidjson.loads)
     )
 
@@ -310,7 +310,7 @@ class ListOfFloatsAsDecimal(Benchmark):
     ITERATIONS = 100
 
     DECODER = (
-        ("zibo", lambda v: zibo_json.loads(v, parse_float=decimal.Decimal)),
+        ("yapic", lambda v: yapic_json.loads(v, parse_float=decimal.Decimal)),
         ("python", lambda v: py_json.loads(v, parse_float=decimal.Decimal)),
         ("rapidjson", lambda v: rapidjson.loads(v, use_decimal=True))
     )
@@ -475,7 +475,7 @@ class LargeDataFormattedToAscii(LargeDataToAscii):
 
 class ToFile:
     ENCODER = (
-        ("zibo", zibo_json.dump),
+        ("yapic", yapic_json.dump),
         ("python", py_json.dump),
         ("simple", simplejson.dump),
         ("ujson", ujson.dump)

@@ -1,4 +1,4 @@
-from zibo import json
+from yapic import json
 
 
 def test_d():

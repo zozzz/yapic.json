@@ -1,5 +1,5 @@
 import pytest
-from zibo import json
+from yapic import json
 
 
 def test_homogene_list_basics():

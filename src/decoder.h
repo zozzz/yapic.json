@@ -55,7 +55,7 @@
 #endif
 
 
-namespace ZiboJson {
+namespace Yapic { namespace Json {
 using namespace double_conversion;
 
 
@@ -80,7 +80,7 @@ class Decoder {
 				Decoder_EatWhiteSpace(end);
 				if (end != inputEnd) {
 					Py_DECREF(result);
-					PyErr_Format(DecodeError, ZiboJson_Err_JunkTrailingData " at position: %ld.", end - inputStart);
+					PyErr_Format(DecodeError, YapicJson_Err_JunkTrailingData " at position: %ld.", end - inputStart);
 					return NULL;
 				}
 			}
@@ -120,7 +120,7 @@ class Decoder {
 
 	private:
 		ChunkBuffer buffer;
-		char floatBuffer[ZIBO_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS + 10];
+		char floatBuffer[YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS + 10];
 
 		#define ReadUnicodeEscapePart(output) \
 			++cursor; \
@@ -131,8 +131,8 @@ class Decoder {
 			} else if (*cursor >= 'A' && *cursor <= 'F') { \
 				output = (output << 4) + (*cursor - 'A' + 10); \
 			} else { \
-				if (*cursor == '\0') { Decoder_Error(ZiboJson_Err_UnexpectedEnd); } \
-				else { Decoder_Error(ZiboJson_Err_UnexpectedCharInUnicodeEscape); } \
+				if (*cursor == '\0') { Decoder_Error(YapicJson_Err_UnexpectedEnd); } \
+				else { Decoder_Error(YapicJson_Err_UnexpectedCharInUnicodeEscape); } \
 				return NULL; \
 			}
 
@@ -180,15 +180,15 @@ class Decoder {
 									if ((ucs_pt2 & 0xFC00) == 0xDC00) {
 										ucs_pt1 = 0x10000 + (((ucs_pt1 - 0xD800) << 10) | (ucs_pt2 - 0xDC00));
 									} else {
-										Decoder_Error(ZiboJson_Err_UnpairedHighSurrogate);
+										Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
 										return NULL;
 									}
 								} else {
-									Decoder_Error(ZiboJson_Err_UnpairedHighSurrogate);
+									Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
 									return NULL;
 								}
 							} else if ((ucs_pt1 & 0xFC00) == 0xDC00) {
-								Decoder_Error(ZiboJson_Err_UnpairedLowSurrogate);
+								Decoder_Error(YapicJson_Err_UnpairedLowSurrogate);
 								return NULL;
 							}
 
@@ -197,9 +197,9 @@ class Decoder {
 
 						default:
 							if (*cursor == '\0') {
-								Decoder_Error(ZiboJson_Err_UnexpectedEnd);
+								Decoder_Error(YapicJson_Err_UnexpectedEnd);
 							} else {
-								Decoder_Error(ZiboJson_Err_InvalidEscape);
+								Decoder_Error(YapicJson_Err_InvalidEscape);
 							}
 							return NULL;
 						break;
@@ -222,7 +222,7 @@ class Decoder {
 				}
 			}
 
-			Decoder_Error(ZiboJson_Err_UnexpectedEnd);
+			Decoder_Error(YapicJson_Err_UnexpectedEnd);
 			return NULL;
 
 		success:
@@ -532,7 +532,7 @@ class Decoder {
 		inline PyObject* __read_number(CHIN *cursor, CHIN **cursorOut) {
 			register typename Trait::Int intValue = 0;
 			char* floatData = floatBuffer;
-			char* floatDataEnd = floatBuffer + ZIBO_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS;
+			char* floatDataEnd = floatBuffer + YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS;
 			int exponent = 0;
 
 			if (Trait::IsNegative && !FloatTrait::IsInternal) {
@@ -576,9 +576,9 @@ class Decoder {
 				Py_RETURN_NAN;
 			} else {
 				if (cursor >= inputEnd) {
-					Decoder_Error(ZiboJson_Err_UnexpectedEnd);
+					Decoder_Error(YapicJson_Err_UnexpectedEnd);
 				} else {
-					Decoder_ErrorFormat(ZiboJson_Err_UnexpectedChar, *cursor);
+					Decoder_ErrorFormat(YapicJson_Err_UnexpectedChar, *cursor);
 				}
 				return NULL;
 			}
@@ -594,7 +594,7 @@ class Decoder {
 						FloatTrait::ConsumeFraction(floatData, &floatData, cursor++, &exponent);
 					} while (*cursor >= '0' && *cursor <= '9' && floatData < floatDataEnd);
 				} else {
-					Decoder_Error(ZiboJson_Err_UnexpectedCharInNumber);
+					Decoder_Error(YapicJson_Err_UnexpectedCharInNumber);
 					return NULL;
 				}
 			}
@@ -655,7 +655,7 @@ class Decoder {
 				*cursorOut = cursor;
 				return true;
 			} else {
-				Decoder_Error(ZiboJson_Err_UnexpectedCharInNumber);
+				Decoder_Error(YapicJson_Err_UnexpectedCharInNumber);
 				return false;
 			}
 		}
@@ -708,9 +708,9 @@ class Decoder {
 						return list;
 					} else {
 						if (*cursor == '\0') {
-							Decoder_Error(ZiboJson_Err_UnexpectedEnd);
+							Decoder_Error(YapicJson_Err_UnexpectedEnd);
 						} else {
-							Decoder_Error(ZiboJson_Err_UnexpectedCharInList);
+							Decoder_Error(YapicJson_Err_UnexpectedCharInList);
 						}
 						break;
 					}
@@ -725,9 +725,9 @@ class Decoder {
 
 		#define Decoder_DictError(expected) \
 			if (*cursor == '\0') { \
-				Decoder_Error(ZiboJson_Err_UnexpectedEnd); \
+				Decoder_Error(YapicJson_Err_UnexpectedEnd); \
 			} else { \
-				Decoder_Error(ZiboJson_Err_UnexpectedCharInDict expected); \
+				Decoder_Error(YapicJson_Err_UnexpectedCharInDict expected); \
 			}
 
 		Decoder_FN(ReadDict) {
@@ -813,7 +813,7 @@ class Decoder {
 				*cursorOut = cursor + 4;
 				Py_RETURN_TRUE;
 			}
-			Decoder_Error(ZiboJson_Err_UnexpectedCharInTrue);
+			Decoder_Error(YapicJson_Err_UnexpectedCharInTrue);
 			return NULL;
 		}
 
@@ -822,7 +822,7 @@ class Decoder {
 				*cursorOut = cursor + 5;
 				Py_RETURN_FALSE;
 			}
-			Decoder_Error(ZiboJson_Err_UnexpectedCharInFalse);
+			Decoder_Error(YapicJson_Err_UnexpectedCharInFalse);
 			return NULL;
 		}
 
@@ -831,12 +831,13 @@ class Decoder {
 				*cursorOut = cursor + 4;
 				Py_RETURN_NONE;
 			}
-			Decoder_Error(ZiboJson_Err_UnexpectedCharInNull);
+			Decoder_Error(YapicJson_Err_UnexpectedCharInNull);
 			return NULL;
 		}
 };
 
-} /* end namespace ZiboJson */
+} /* end namespace Json */
+} /* end namespace Yapic */
 
 
 #endif /* QDD73D15_6133_C640_1481_736A723E63B6 */

@@ -2,7 +2,7 @@ import pytest
 import math
 import decimal
 import json as py_json
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 
 CASES = [
@@ -20,16 +20,16 @@ CASES = [
 
 @pytest.mark.parametrize("value,expected", CASES)
 def test_float_encode(value, expected, ensure_ascii):
-    assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
 @pytest.mark.parametrize("expected,value", CASES)
 def test_float_decode(value, expected, decoder_input_type):
     if math.isnan(expected):
-        assert math.isnan(zibo_json.loads(value))
+        assert math.isnan(yapic_json.loads(value))
     else:
         value = decoder_input_type(value)
-        assert zibo_json.loads(value) == py_json.loads(value)
+        assert yapic_json.loads(value) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("value", [
@@ -50,11 +50,11 @@ def test_float_decode(value, expected, decoder_input_type):
 ])
 def test_float_decode2(value, decoder_input_type):
     value = decoder_input_type(value)
-    assert zibo_json.loads(value) == py_json.loads(value)
+    assert yapic_json.loads(value) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("expected,value", CASES)
 def test_float_parse_hook(value, expected, decoder_input_type):
     if not math.isnan(expected):
         value = decoder_input_type(value)
-        assert zibo_json.loads(value, parse_float=decimal.Decimal) == py_json.loads(value, parse_float=decimal.Decimal)
+        assert yapic_json.loads(value, parse_float=decimal.Decimal) == py_json.loads(value, parse_float=decimal.Decimal)

@@ -1,7 +1,7 @@
 import pytest
 import json as py_json
 from io import StringIO
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 
 @pytest.mark.parametrize(
@@ -20,7 +20,7 @@ from zibo import json as zibo_json
     ])
 def test_encode_to_file(value, expected, ensure_ascii):
     with StringIO() as s:
-        zibo_json.dump(value, s, ensure_ascii=ensure_ascii)
+        yapic_json.dump(value, s, ensure_ascii=ensure_ascii)
         if expected is py_json.dumps:
             assert s.getvalue() == py_json.dumps(value, ensure_ascii=ensure_ascii, separators=(",", ":"))
         else:

@@ -1,6 +1,6 @@
 import pytest
 import json as py_json
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 
 class Int:
@@ -19,7 +19,7 @@ large_dict = {
     "first_name": "Vetési",
     "last_name": "Zoltán",
     "email": "vetesi.zoltan@gmail.com",
-    "zibo": {
+    "yapic": {
         "json": {
             "dumps": ["obj", {"encode_ascii": True}, {"default": None}],
             "dump": ["obj", "file", {"encode_ascii": True}, {"default": None}]
@@ -49,7 +49,7 @@ large_dict = {
 def test_dict_encode(value, expected, ensure_ascii):
     if expected is py_json.dumps:
         expected = py_json.dumps(value, ensure_ascii=ensure_ascii, separators=(",", ":"), default=default)
-    assert zibo_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
 def test_dict_recursive(ensure_ascii):
@@ -58,8 +58,8 @@ def test_dict_recursive(ensure_ascii):
     )
     d["self"] = d
 
-    with pytest.raises(zibo_json.JsonEncodeError) as ex:
-        zibo_json.dumps(d, ensure_ascii=ensure_ascii)
+    with pytest.raises(yapic_json.JsonEncodeError) as ex:
+        yapic_json.dumps(d, ensure_ascii=ensure_ascii)
 
     ex.match("Maximum recursion level reached, while encoding dict entry .*? at 'self' key.")
 
@@ -91,7 +91,7 @@ def test_dict_recursive(ensure_ascii):
     py_json.dumps(large_dict, indent=4, separators=("   , ", ":"), ensure_ascii=False, default=default),
 ])
 def test_dict_decode(value):
-    assert zibo_json.loads(value) == py_json.loads(value)
+    assert yapic_json.loads(value) == py_json.loads(value)
 
 
 def test_dict_encode_object_hook():
@@ -99,58 +99,58 @@ def test_dict_encode_object_hook():
         o["value"] *= 2
         return o
 
-    assert zibo_json.loads('{"value":2}', object_hook=hook) == dict(value=4)
+    assert yapic_json.loads('{"value":2}', object_hook=hook) == dict(value=4)
 
 
 def test_dict_encode_invalid1():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"A":2} f')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"A":2} f')
     ex.match("Found junk data after valid JSON data at position: 8.")
 
 
 def test_dict_encode_invalid2():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{')
     ex.match("Unexpected end of data at position: 1.")
 
 
 def test_dict_encode_invalid3():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"')
     ex.match("Unexpected end of data at position: 2.")
 
 
 def test_dict_encode_invalid4():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"D"')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"D"')
     ex.match("Unexpected end of data at position: 4.")
 
 
 def test_dict_encode_invalid5():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"D"2')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"D"2')
     ex.match("Unexpected character found when decoding 'dict', expected one of ':' at position: 4.")
 
 
 def test_dict_encode_invalid6():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"D" :')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"D" :')
     ex.match("Unexpected end of data at position: 6.")
 
 
 def test_dict_encode_invalid7():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"D" :2')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"D" :2')
     ex.match("Unexpected end of data at position: 7.")
 
 
 def test_dict_encode_invalid8():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{"D" :2b')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"D" :2b')
     ex.match("Unexpected character found when decoding 'dict', expected one of ',', '}' at position: 7.")
 
 
 def test_dict_encode_invalid9():
-    with pytest.raises(zibo_json.JsonDecodeError) as ex:
-        zibo_json.loads('{:}')
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{:}')
     ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 1.")

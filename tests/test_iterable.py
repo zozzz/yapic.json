@@ -1,11 +1,11 @@
 import pytest
-from zibo import json as zibo_json
-from zibo.json import JsonEncodeError
+from yapic import json as yapic_json
+from yapic.json import JsonEncodeError
 
 
 @pytest.mark.only
 def test_iterable_encode_basic(ensure_ascii):
-    assert zibo_json.dumps(iter([1, 2, 3, 4, 5]), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
+    assert yapic_json.dumps(iter([1, 2, 3, 4, 5]), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
 
 
 def test_iterable_encode_obj(ensure_ascii):
@@ -20,7 +20,7 @@ def test_iterable_encode_obj(ensure_ascii):
                 return self.i
             raise StopIteration()
 
-    assert zibo_json.dumps(Iterable(), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
+    assert yapic_json.dumps(Iterable(), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
 
 
 def test_iterable_encode_generator(ensure_ascii):
@@ -31,7 +31,7 @@ def test_iterable_encode_generator(ensure_ascii):
         yield 4
         yield 5
 
-    assert zibo_json.dumps(generator(), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
+    assert yapic_json.dumps(generator(), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
 
 
 def test_iterable_encode_exception():
@@ -40,7 +40,7 @@ def test_iterable_encode_exception():
         raise RuntimeError("some error")
 
     with pytest.raises(RuntimeError) as excinfo:
-        zibo_json.dumps(generator())
+        yapic_json.dumps(generator())
 
     excinfo.match("some error")
 
@@ -51,7 +51,7 @@ def test_iterable_encode_recursive():
         yield recursive()
 
     with pytest.raises(JsonEncodeError) as excinfo:
-        zibo_json.dumps(recursive())
+        yapic_json.dumps(recursive())
 
     excinfo.match("Maximum recursion level reached, while encoding iterable entry .*? at 1 index.")
 
@@ -61,6 +61,6 @@ def test_iterable_encode_recursive2():
         yield recursive()
 
     with pytest.raises(JsonEncodeError) as excinfo:
-        zibo_json.dumps(recursive())
+        yapic_json.dumps(recursive())
 
     excinfo.match("Maximum recursion level reached, while encoding iterable entry .*? at 0 index.")

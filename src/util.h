@@ -3,10 +3,7 @@
 
 #include "config.h"
 
-#define ZiboJson_UnrolledLoopEnd(length, loopSize) ((length) & ~((loopSize) - 1))
-
-namespace ZiboJson {
-
+namespace Yapic { namespace Json {
 
 #define __bytelength(T, l) \
 	(sizeof(T) == 1 ? l : sizeof(T) == 2 ? l << 1 : l << 2)
@@ -28,6 +25,7 @@ static inline void CopyBytes(O* dest, const I* input, S length) {
 
 #undef __bytelength
 
-} /* end namespace ZiboJson */
+} /* end namespace Json */
+} /* end namespace Yapic */
 
 #endif /* U492A975_4133_C6A2_1678_FF0AE59B4CBD */

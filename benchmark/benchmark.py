@@ -10,7 +10,7 @@ import simplejson
 import ujson
 import rapidjson
 import metamagic.json
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 
 BENCHMARKS = []
 
@@ -27,7 +27,7 @@ class Benchmark(metaclass=BenchmarkMeta):
     ENSURE_ASCII = True
 
     ENCODER = (
-        ("zibo", zibo_json.dumps),
+        ("yapic", yapic_json.dumps),
         ("python", py_json.dumps),
         # ("simple", simplejson.dumps),
         ("ujson", ujson.dumps),
@@ -36,7 +36,7 @@ class Benchmark(metaclass=BenchmarkMeta):
     )
 
     DECODER = (
-        ("zibo", zibo_json.loads),
+        ("yapic", yapic_json.loads),
         ("python", py_json.loads),
         # ("simple", simplejson.loads),
         ("ujson", ujson.loads),
@@ -168,7 +168,7 @@ class Benchmark(metaclass=BenchmarkMeta):
                     table.write_group("DECODE")
 
                 for (lib_name, lib_fn) in t:
-                    if skip_comparsion and lib_name != "zibo":
+                    if skip_comparsion and lib_name != "yapic":
                         continue
 
                     if lib_name in ("simple", "python") and t is b.ENCODER:

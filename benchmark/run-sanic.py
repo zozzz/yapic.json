@@ -7,7 +7,7 @@ from os import path, system
 from sanic import Sanic
 from sanic import response
 
-from zibo import json as zibo_json
+from yapic import json as yapic_json
 import ujson
 
 app = Sanic()
@@ -18,19 +18,19 @@ REQUESTES = 1000
 
 with open(path.join(path.dirname(__file__), "large-data.json"), "r") as f:
     LARGE_JSON_STRING = f.read()
-    LARGE_JSON = zibo_json.loads(LARGE_JSON_STRING)
+    LARGE_JSON = yapic_json.loads(LARGE_JSON_STRING)
 
 
-@app.route("/zibo-stream")
-async def get_zibo_strem(request):
+@app.route("/yapic-stream")
+async def get_yapic_strem(request):
     async def streaming_fn(response):
-        zibo_json.dump(LARGE_JSON, response)
+        yapic_json.dump(LARGE_JSON, response)
     return response.stream(streaming_fn, content_type="application/json; charset=utf-8")
 
 
-@app.route("/zibo")
-async def get_zibo(request):
-    return response.text(zibo_json.dumps(LARGE_JSON, ensure_ascii=False), content_type="application/json; charset=utf-8")
+@app.route("/yapic")
+async def get_yapic(request):
+    return response.text(yapic_json.dumps(LARGE_JSON, ensure_ascii=False), content_type="application/json; charset=utf-8")
 
 
 @app.route("/ujson-stream")
@@ -57,8 +57,8 @@ if __name__ == "__main__":
             # system("siege -b -c %s -r %s http://localhost:8000/%s" % (CONCURENCY, REQUESTES, name))
             system("ab -c %s -n %s http://localhost:8000/%s" % (CONCURENCY, REQUESTES, name))
 
-        run_test("zibo")
-        run_test("zibo-stream")
+        run_test("yapic")
+        run_test("yapic-stream")
         run_test("ujson")
         run_test("ujson-stream")
 
