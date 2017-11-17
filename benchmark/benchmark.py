@@ -9,6 +9,7 @@ import json as py_json
 import simplejson
 import ujson
 import rapidjson
+import metamagic.json
 from zibo import json as zibo_json
 
 BENCHMARKS = []
@@ -30,7 +31,8 @@ class Benchmark(metaclass=BenchmarkMeta):
         ("python", py_json.dumps),
         # ("simple", simplejson.dumps),
         ("ujson", ujson.dumps),
-        ("rapidjson", rapidjson.dumps)
+        ("rapidjson", rapidjson.dumps),
+        ("metamagic", metamagic.json.dumps),
     )
 
     DECODER = (
@@ -38,7 +40,8 @@ class Benchmark(metaclass=BenchmarkMeta):
         ("python", py_json.loads),
         # ("simple", simplejson.loads),
         ("ujson", ujson.loads),
-        ("rapidjson", rapidjson.loads)
+        ("rapidjson", rapidjson.loads),
+        ("metamagic", metamagic.json.loads),
     )
 
     def get_encode_data(self):
@@ -172,6 +175,8 @@ class Benchmark(metaclass=BenchmarkMeta):
                         kwargs["default"] = b.default
                     elif "default" in kwargs:
                         del kwargs["default"]
+                    elif lib_name == "metamagic" and t is b.ENCODER:
+                        del kwargs["ensure_ascii"]
 
                     local_data = data[lib_name] = {"times": []}
                     table.write_row(lib_name, True, None)

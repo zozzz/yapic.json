@@ -514,6 +514,17 @@ class LargeDataToFileUnicode(ToFile, LargeDataToUnicode):
     """ Large data -> file (Unicode) """
 
 
+class MypyDataToAscii(Benchmark):
+    """ Mypy data -> Ascii """
+
+    ENSURE_ASCII = True
+    ITERATIONS = 100
+
+    def get_encode_data(self):
+        with codecs.open(path.join(path.dirname(__file__), "large-data.json"), "r", "utf-8") as f:
+            return py_json.load(f)
+
+
 if __name__ == "__main__":
     import sys
     Benchmark.run_all(sys.argv[1:])
