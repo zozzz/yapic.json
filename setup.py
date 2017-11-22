@@ -4,7 +4,7 @@ import sys
 import os
 from glob import glob
 from os import path
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 DEVELOP = os.environ.get("DEBUG") == "1"
 VERSION = "1.0.0"
@@ -17,9 +17,10 @@ extension = Extension(
     library_dirs=[path.join(sys.prefix, "libs")],
     language="c++",
     sources=sources,
-    # include_dirs=[
-    #     "src"
-    # ],
+    include_dirs=[
+        "libs/double-conversion",
+        "libs/yapic.core/src/yapic/core/include"
+    ],
     define_macros=[
         ("YAPIC_JSON_VERSION_MAJOR", VERSION.split(".")[0]),
         ("YAPIC_JSON_VERSION_MINOR", VERSION.split(".")[1]),

@@ -5,6 +5,14 @@
 
 namespace Yapic { namespace Json {
 
+class Module: Yapic::Module<Module> {
+public:
+	static constexpr const char* __name__ = "yapic.json";
+
+	using Yapic::
+
+};
+
 static PyObject* TZINFO_NAME;
 static PyObject* UTCOFFSET_METHOD_NAME;
 static PyObject* WRITE_METHOD_NAME;
