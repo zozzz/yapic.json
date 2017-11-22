@@ -12,10 +12,10 @@
 #undef max
 
 #define Decoder_Error(msg) \
-	PyErr_Format(DecodeError, msg " at position: %ld.", cursor - inputStart)
+	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", cursor - inputStart)
 
 #define Decoder_ErrorFormat(msg, ...) \
-	PyErr_Format(DecodeError, msg " at position: %ld.", __VA_ARGS__, cursor - inputStart); \
+	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", __VA_ARGS__, cursor - inputStart); \
 	return NULL
 
 #define Decoder_FN(name) \
@@ -80,7 +80,7 @@ class Decoder {
 				Decoder_EatWhiteSpace(end);
 				if (end != inputEnd) {
 					Py_DECREF(result);
-					PyErr_Format(DecodeError, YapicJson_Err_JunkTrailingData " at position: %ld.", end - inputStart);
+					PyErr_Format(Module::State()->DecodeError, YapicJson_Err_JunkTrailingData " at position: %ld.", end - inputStart);
 					return NULL;
 				}
 			}
@@ -384,13 +384,13 @@ class Decoder {
 
 			static inline PyObject* NewTZ(const int& tz) {
 				if (tz == 0) {
-					return PyUTCTimezone;
+					return Module::State()->PyUTCTimezone;
 				} else {
 					PyObject* delta = PyDelta_FromDSU(0, tz, 0);
 					if (delta == NULL) {
 						return NULL;
 					}
-					PyObject* tzinfo = PyObject_CallFunctionObjArgs(PyTimezone, delta, NULL);
+					PyObject* tzinfo = PyObject_CallFunctionObjArgs(Module::State()->PyTimezone, delta, NULL);
 					Py_DECREF(delta);
 					return tzinfo;
 				}
@@ -449,9 +449,9 @@ class Decoder {
 				} else {
 					ReadDate_Return(Time, h, m, s, f);
 				}
-			} else {
-				return false;
 			}
+
+			return false;
 		}
 
 		template<typename _Int>

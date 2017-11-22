@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "util.h"
-#include "globals.h"
+#include "json.h"
 
 
 namespace Yapic { namespace Json {
@@ -114,7 +114,7 @@ class FileBuffer: public MemoryBuffer<T, length> {
 		}
 
 		inline bool SetTarget(PyObject* target) {
-			write = PyObject_GetAttr(target, WRITE_METHOD_NAME);
+			write = PyObject_GetAttr(target, Module::State()->STR_WRITE);
 			return write != NULL;
 		}
 

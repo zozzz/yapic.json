@@ -7,7 +7,7 @@
 #include "../libs/double-conversion/double-conversion/double-conversion.h"
 #include "config.h"
 #include "buffer.h"
-#include "globals.h"
+#include "json.h"
 
 
 namespace Yapic { namespace Json {
@@ -38,7 +38,7 @@ using namespace double_conversion;
 	((assert(recursionDepth < maxRecursionDepth)), --recursionDepth)
 
 #define Encoder_RecursionError(msg, ...) \
-	PyErr_Format(EncodeError, YapicJson_Err_MaxRecursion msg, __VA_ARGS__)
+	PyErr_Format(Module::State()->EncodeError, YapicJson_Err_MaxRecursion msg, __VA_ARGS__)
 
 #define Encoder_RecursionOccured() \
 	(recursionDepth > maxRecursionDepth && !PyErr_Occurred())
@@ -81,6 +81,9 @@ class Encoder {
 		}
 
 		inline bool Encode(PyObject* obj) {
+			// printf("Encode %s\n", PyUnicode_1BYTE_DATA(PyObject_Repr(obj)));
+			assert(obj != NULL);
+
 			if (PyUnicode_CheckExact(obj)) {
 				Encoder_AppendFast('"');
 				if (EXPECT_TRUE(EncodeString(obj))) {
@@ -135,7 +138,7 @@ class Encoder {
 				return EncodeWithDefault<false>(obj);
 			}
 
-			PyErr_Format(EncodeError, YapicJson_Err_NotSerializable, obj);
+			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_NotSerializable, obj);
 			Encoder_RETURN_FALSE;
 		}
 
@@ -175,7 +178,7 @@ class Encoder {
 				return EncodeWithDefault<true>(obj);
 			}
 
-			PyErr_Format(EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
+			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
 			Encoder_RETURN_FALSE;
 		}
 
@@ -307,7 +310,7 @@ class Encoder {
 			register long long value = PyLong_AsLongLongAndOverflow(obj, &is_overflow);
 
 			if (is_overflow != 0) {
-				PyErr_SetString(EncodeError, YapicJson_Err_IntOverflow);
+				PyErr_SetString(Module::State()->EncodeError, YapicJson_Err_IntOverflow);
 				return NULL;
 			}
 
@@ -456,11 +459,11 @@ class Encoder {
 				EncodeDT_AppendInt3(tms);
 			}
 
-			PyObject* tzinfo = PyObject_GetAttr(obj, TZINFO_NAME);
+			PyObject* tzinfo = PyObject_GetAttr(obj, Module::State()->STR_TZINFO);
 			if (tzinfo == NULL) {
 				Encoder_RETURN_FALSE;
 			} else if (tzinfo != Py_None) {
-				PyObject *delta = PyObject_CallMethodObjArgs(tzinfo, UTCOFFSET_METHOD_NAME, obj, NULL);
+				PyObject *delta = PyObject_CallMethodObjArgs(tzinfo, Module::State()->STR_UTCOFFSET, obj, NULL);
 				Py_DECREF(tzinfo);
 
 				if (delta == NULL) {
