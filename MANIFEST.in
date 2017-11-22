@@ -1,2 +1,0 @@
-recursive-include src *.h
-recursive-include libs/double-conversion/double-conversion *.h
