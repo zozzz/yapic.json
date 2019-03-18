@@ -1,0 +1,102 @@
+version: 2
+
+_vars:
+  - &docker-x86-py37
+    docker:
+      - image: quay.io/pypa/manylinux1_i686
+        environment:
+          PYBIN: /opt/python/cp37-cp37m/bin/python3
+    working_directory: ~/repo
+
+  - &docker-x64-py37
+    docker:
+      - image: quay.io/pypa/manylinux1_x86_64
+        environment:
+          PYBIN: /opt/python/cp37-cp37m/bin/python3
+    working_directory: ~/repo
+
+  - &job-prepare
+    steps:
+      - checkout
+
+      - run:
+          name: checkout submodules
+          command: |
+            sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+            git submodule update --init --recursive
+
+      - run:
+          name: install dependencies
+          command: |
+            "${PYBIN}" -m pip install --upgrade pip setuptools pytest auditwheel
+
+      - run:
+          name: build
+          command: |
+            "${PYBIN}" setup.py bdist_wheel
+            "${PYBIN}" -m auditwheel repair dist/*.whl
+
+      - run:
+          name: test
+          command: |
+            rm -rf pytest.py
+            "${PYBIN}" -m pip install --upgrade wheelhouse/*.whl
+            "${PYBIN}" -m pytest -x -s -v tests
+
+      - persist_to_workspace:
+          root: wheelhouse
+          paths: "*.whl"
+
+  - &job-release
+    steps:
+      - attach_workspace:
+          at: wheelhouse
+
+      - run:
+          name: install dependencies
+          command: |
+            "${PYBIN}" -m pip install --upgrade twine
+
+      - run:
+          name: release
+          command: |
+            "${PYBIN}" -m twine upload --skip-existing wheelhouse/*.whl
+
+  - &release-filters
+    branches: { only: release }
+    tags: { only: /^\d+\.\d+\.\d+$/ }
+
+jobs:
+  x86-py37-prepare:
+    <<: *docker-x86-py37
+    <<: *job-prepare
+
+  x86-py37-release:
+    <<: *docker-x86-py37
+    <<: *job-release
+
+  x64-py37-prepare:
+    <<: *docker-x64-py37
+    <<: *job-prepare
+
+  x64-py37-release:
+    <<: *docker-x64-py37
+    <<: *job-release
+
+workflows:
+  version: 2
+  x86-py37:
+    jobs:
+      - x86-py37-prepare
+      - x86-py37-release:
+          filters: *release-filters
+          requires:
+            - x86-py37-prepare
+
+  x64-py37:
+    jobs:
+      - x64-py37-prepare
+      - x64-py37-release:
+          filters: *release-filters
+          requires:
+            - x64-py37-prepare
