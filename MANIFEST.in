@@ -1,0 +1,9 @@
+include LICENSE
+include README.rst
+recursive-include src *.cpp
+recursive-include src *.h
+recursive-include libs/yapic.core/src/yapic/core/include *.hpp
+recursive-include libs/double-conversion/double-conversion *.cc
+recursive-include libs/double-conversion/double-conversion *.h
+include libs/double-conversion/LICENSE
+include libs/double-conversion/AUTHORS
