@@ -34,7 +34,7 @@ Features
 
 
 Requirements
-^^^^^^^^^^^^
+------------
 
 - Only works with Python 3.5 or greater
 - c++ 11 comaptible compiler. *(only if u want to build from source)*
