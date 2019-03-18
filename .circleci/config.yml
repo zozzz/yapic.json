@@ -9,7 +9,7 @@ executors:
     docker:
       - image: quay.io/pypa/manylinux1_i686
     environment:
-      PYBIN: /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
+      PYBIN: linux32 /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
 
   x64:
     parameters:
@@ -39,29 +39,102 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            "${PYBIN}" -m pip install --upgrade pip setuptools pytest auditwheel
+            ${PYBIN} -m pip install --upgrade pip setuptools pytest auditwheel
 
       - run:
           name: build
           command: |
-            "${PYBIN}" setup.py bdist_wheel
-            "${PYBIN}" -m auditwheel repair dist/*.whl
+            ${PYBIN} setup.py bdist_wheel
+            ${PYBIN} -m auditwheel repair dist/*.whl
 
       - run:
           name: test
           command: |
-            "${PYBIN}" -m pip install --upgrade wheelhouse/*.whl
-            "${PYBIN}" -m pytest -x -s -v tests
+            ${PYBIN} -m pip install --upgrade wheelhouse/*.whl
+            ${PYBIN} -m pytest -x -s -v tests
 
       - persist_to_workspace:
           root: wheelhouse
           paths: "*.whl"
+
+  release:
+    parameters:
+      exec:
+        type: executor
+    executor: << parameters.exec >>
+    steps:
+      - attach_workspace:
+          at: wheelhouse
+
+      - run:
+          name: install dependencies
+          command: |
+            ${PYBIN} -m pip install --upgrade twine
+
+      - run:
+          name: release
+          command: |
+            ${PYBIN} -m twine upload --skip-existing wheelhouse/*.whl
+
+_vars:
+  - &release-filter
+    branches: { only: release }
+    tags: { only: /^\d+\.\d+\.\d+$/ }
 
 workflows:
   x86-py35:
     jobs:
       - prepare:
           exec: { name: x86, pyver: cp35 }
+      - release:
+          exec: { name: x86, pyver: cp35 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x86-py36:
+    jobs:
+      - prepare:
+          exec: { name: x86, pyver: cp36 }
+      - release:
+          exec: { name: x86, pyver: cp36 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x86-py37:
+    jobs:
+      - prepare:
+          exec: { name: x86, pyver: cp37 }
+      - release:
+          exec: { name: x86, pyver: cp37 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x64-py35:
+    jobs:
+      - prepare:
+          exec: { name: x64, pyver: cp35 }
+      - release:
+          exec: { name: x64, pyver: cp35 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x64-py36:
+    jobs:
+      - prepare:
+          exec: { name: x64, pyver: cp36 }
+      - release:
+          exec: { name: x64, pyver: cp36 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x64-py37:
+    jobs:
+      - prepare:
+          exec: { name: x64, pyver: cp37 }
+      - release:
+          exec: { name: x64, pyver: cp37 }
+          requires: [prepare]
+          filters: *release-filter
       # - prepare:
       #     exec: { name: x86, pyver: cp35 }
 # _vars:
