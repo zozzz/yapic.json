@@ -51,7 +51,7 @@ jobs:
           name: test
           command: |
             ${PYBIN} -m pip install --upgrade wheelhouse/*.whl
-            ${PYBIN} -m pytest -x -s -v tests
+            ${PYBIN} -m pytest -x -s tests
 
       - persist_to_workspace:
           root: wheelhouse
