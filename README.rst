@@ -77,7 +77,9 @@ Functions
 
 -  `loads <https://github.com/zozzz/yapic.json/blob/master/src/_json.pyi#L11>`_ (**s:** ``bytes``, ``str``, ``*``, **object_hook:** ``Callable[[dict], Any]]=None``, **parse_float:** ``Callable[[str], Any]]=None``, **parse_date:** ``bool=True``)
 
-   **object_hook example:** ::
+   **object_hook example:**
+
+   .. code-block:: python
 
       >>> from yapic import json
       >>> def hook(dict_):
@@ -88,7 +90,9 @@ Functions
       >>>     object_hook=hook)
       (1+2j)
 
-   **parse_float example:** ::
+   **parse_float example:**
+
+   .. code-block:: python
 
       >>> from yapic import json
       >>> from decimal import Decimal
@@ -99,30 +103,30 @@ Functions
 
    **default example:**
 
-      .. code-block:: python
+   .. code-block:: python
 
-         >>> from yapic import json
-         >>> def default_func(o):
-         ...     if isinstance(o, complex):
-         ...         return {"__complex__":True, "real":1, "imag":2}
-         ...
-         >>> json.dumps(1 + 2j, default=default_func)
-         '{"__complex__":true,"real":1,"imag":2}'
+      >>> from yapic import json
+      >>> def default_func(o):
+      ...     if isinstance(o, complex):
+      ...         return {"__complex__":True, "real":1, "imag":2}
+      ...
+      >>> json.dumps(1 + 2j, default=default_func)
+      '{"__complex__":true,"real":1,"imag":2}'
 
    **tojson example:**
 
-      .. code-block:: python
+   .. code-block:: python
 
-         >>> from yapic import json
-         >>> class Point(object):
-         ...     def __init__(self, x, y):
-         ...         self.x = x
-         ...         self.y = y
-         ...     def __json__(self):
-         ...         return {"x":self.x, "y":self.y}
-         ...
-         >>> json.dumps(Point(10, 20))
-         '{"x":10,"y":20}'
+      >>> from yapic import json
+      >>> class Point(object):
+      ...     def __init__(self, x, y):
+      ...         self.x = x
+      ...         self.y = y
+      ...     def __json__(self):
+      ...         return {"x":self.x, "y":self.y}
+      ...
+      >>> json.dumps(Point(10, 20))
+      '{"x":10,"y":20}'
 
 
 Exceptions
