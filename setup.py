@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 from glob import glob
-from os import path
 from pathlib import Path
 from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
@@ -20,41 +18,44 @@ undef_macros = []
 extra_compile_args = []
 
 if sys.platform == "win32":
-    define_macros["UNICODE"] = 1
+    define_macros["UNICODE"] = "1"
 
     DEVELOP = sys.executable.endswith("python_d.exe")
     if DEVELOP:
-        define_macros["_DEBUG"] = 1
+        define_macros["_DEBUG"] = "1"
         undef_macros.append("NDEBUG")
         extra_compile_args.append("/MTd")
         # extra_compile_args.append("/Zi")
 else:
-    DEVELOP = False
+    extra_compile_args.append("-std=c++11")
+    extra_compile_args.append("-Wno-unknown-pragmas")
+    extra_compile_args.append("-Wno-write-strings")
 
+    DEVELOP = sys.executable.endswith("-dbg")
+    if DEVELOP:
+        define_macros["_DEBUG"] = 1
+        undef_macros.append("NDEBUG")
+    else:
+        extra_compile_args.append("-O3")
 
 sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
 depends = glob("src/*.h")
 
 extension = Extension(
-    name="yapic.json",
+    name="yapic.json._json",
     language="c++",
     sources=sources,
     depends=depends,
-    include_dirs=[
-        "libs/double-conversion",
-        "libs/yapic.core/src/yapic/core/include"
-    ],
+    include_dirs=["libs/double-conversion", "libs/yapic.core/src/yapic/core/include"],
     define_macros=list(define_macros.items()),
     undef_macros=list(undef_macros),
-    extra_compile_args=extra_compile_args
-)
+    extra_compile_args=extra_compile_args)
 
 
 def cmd_prerun(cmd, requirements):
     for r in requirements(cmd.distribution):
-        installed = cmd.distribution.fetch_build_eggs(r if r else None)
-        print(installed)
+        installed = cmd.distribution.fetch_build_eggs(r if r else [])
 
         for dp in map(lambda x: x.location, installed):
             if dp not in sys.path:
@@ -73,7 +74,6 @@ def cmd_prerun(cmd, requirements):
             ext.write_stub(ep, e, False)
 
 
-
 class PyTest(TestCommand):
     user_options = [
         ("pytest-args=", "a", "Arguments to pass to pytest"),
@@ -82,7 +82,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         super().initialize_options()
-        self.pytest_args = "-x -s"
+        self.pytest_args = "-x -s -v"
         self.file = None
 
     def finalize_options(self):
@@ -128,27 +128,21 @@ class Benchmark(Command):
 
 setup(
     name="yapic.json",
+    version=VERSION,
+    url="https://github.com/zozzz/yapic.json/",
+    author="Zoltán Vetési",
+    author_email="vetesi.zoltan@gmail.com",
+    long_description=(Path(__file__).parent / "README.rst").read_text(encoding="utf-8"),
+    license="BSD",
     packages=["yapic.json"],
     package_dir={"yapic.json": "src"},
+    package_data={"yapic.json": ["_json.pyi"]},
     ext_modules=[extension],
-    version=VERSION,
     description="Fastest JSON encode / decode library.",
-    author="Vetési Zoltán",
-    author_email="vetesi.zoltan@gmail.com",
-    url="http://github.com",
     tests_require=["pytest"],
-    extras_require={
-        "benchmark": [
-            "simplejson",
-            "ujson",
-            "python-rapidjson",
-            "termcolor",
-            "metamagic.json"
-        ]
-    },
+    extras_require={"benchmark": ["simplejson", "ujson", "python-rapidjson", "termcolor", "metamagic.json"]},
     python_requires=">=3.5",
     cmdclass={
         "test": PyTest,
         "benchmark": Benchmark
-    }
-)
+    })

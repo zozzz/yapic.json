@@ -5,20 +5,13 @@
 #include <Python.h>
 #include <datetime.h>
 
-#if 0
-#ifdef NDEBUG
-#	define YAPIC_JSON_VERSION_STR \
-		#YAPIC_JSON_VERSION_MAJOR "." \
-		#YAPIC_JSON_VERSION_MINOR "." \
-		#YAPIC_JSON_VERSION_PATH
-#else
-#	define YAPIC_JSON_VERSION_STR \
-		#YAPIC_JSON_VERSION_MAJOR "." \
-		#YAPIC_JSON_VERSION_MINOR "." \
-		#YAPIC_JSON_VERSION_PATH "-debug"
-#endif
-#endif
-#define YAPIC_JSON_VERSION_STR "1.0.0"
+#define __YapicJson_STR(__v) #__v
+#define YapicJson_STR(__v) __YapicJson_STR(__v)
+
+#define YAPIC_JSON_VERSION_STR \
+	YapicJson_STR(YAPIC_JSON_VERSION_MAJOR) "." \
+	YapicJson_STR(YAPIC_JSON_VERSION_MINOR) "." \
+	YapicJson_STR(YAPIC_JSON_VERSION_PATCH)
 
 // see double-conversion.cc kMaxSignificantDigits
 #define YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS 772

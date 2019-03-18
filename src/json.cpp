@@ -143,7 +143,7 @@ namespace Yapic { namespace Json {
 } /* end namespace Yapic */
 
 
-PyMODINIT_FUNC PyInit_json(void) {
+PyMODINIT_FUNC PyInit__json(void) {
 	return Yapic::Json::Module::Create();
 }
 
