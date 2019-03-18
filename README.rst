@@ -1,6 +1,23 @@
 yapic.json
 ===========
 
+.. image:: https://img.shields.io/appveyor/ci/zozzz/yapic-json/release.svg?label=windows&style=flat-square
+      :alt: AppVeyor
+      :target: https://ci.appveyor.com/project/zozzz/yapic-json
+
+.. image:: https://img.shields.io/circleci/project/github/zozzz/yapic.json/release.svg?label=linux&style=flat-square
+      :alt: CircleCI
+      :target: https://circleci.com/gh/zozzz/yapic.json
+
+.. image:: https://img.shields.io/travis/com/zozzz/yapic.json/release.svg?label=sdist&style=flat-square
+      :alt: Travis
+      :target: https://travis-ci.com/zozzz/yapic.json
+
+.. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat-square
+      :alt: PyPI - Downloads
+      :target: https://pypi.org/project/yapic.json/
+
+
 ``yapic.json`` is an extreamly fast json encoder / decoder package for python.
 Encoding and decoding output fully compatible with ``python.json`` package.
 
@@ -32,28 +49,28 @@ Very similar that ``python.json``, let's see some example
 
 Json data to python
 
-   .. code-block:: python
+.. code-block:: python
 
-      from yapic import json
+   from yapic import json
 
-      >>> json.loads('"Hello World"')
-      "Hello World"
+   >>> json.loads('"Hello World"')
+   "Hello World"
 
 Python object to json data
 
-   .. code-block:: python
+.. code-block:: python
 
-      from yapic import json
+   from yapic import json
 
-      >>> json.dumps("Hello World")
-      '"Hello World"'
+   >>> json.dumps("Hello World")
+   '"Hello World"'
 
-      class Point:
-         def __json__(self):
-            return {"x":1, "y":2}
+   class Point:
+      def __json__(self):
+         return {"x":1, "y":2}
 
-      >>> json.dumps(Point())
-      '{"x":1,"y":2}'
+   >>> json.dumps(Point())
+   '{"x":1,"y":2}'
 
 Functions
 ---------
@@ -80,28 +97,32 @@ Functions
 
 -  `dumps <https://github.com/zozzz/yapic.json/blob/master/src/_json.pyi#L20>`_ (**obj:** ``Any``, ``*``, **default:** ``Callable[[Any], JSONT]=None``, **tojson:** ``str="__json__"``, **ensure_ascii:** ``bool=True``, **encode_datetime:** ``bool=True``)
 
-   **default example:** ::
+   **default example:**
 
-      >>> from yapic import json
-      >>> def default_func(o):
-      ...     if isinstance(o, complex):
-      ...         return {"__complex__":True, "real":1, "imag":2}
-      ...
-      >>> json.dumps(1 + 2j, default=default_func)
-      '{"__complex__":true,"real":1,"imag":2}'
+      .. code-block:: python
 
-   **tojson example:** ::
+         >>> from yapic import json
+         >>> def default_func(o):
+         ...     if isinstance(o, complex):
+         ...         return {"__complex__":True, "real":1, "imag":2}
+         ...
+         >>> json.dumps(1 + 2j, default=default_func)
+         '{"__complex__":true,"real":1,"imag":2}'
 
-      >>> from yapic import json
-      >>> class Point(object):
-      ...     def __init__(self, x, y):
-      ...         self.x = x
-      ...         self.y = y
-      ...     def __json__(self):
-      ...         return {"x":self.x, "y":self.y}
-      ...
-      >>> json.dumps(Point(10, 20))
-      '{"x":10,"y":20}'
+   **tojson example:**
+
+      .. code-block:: python
+
+         >>> from yapic import json
+         >>> class Point(object):
+         ...     def __init__(self, x, y):
+         ...         self.x = x
+         ...         self.y = y
+         ...     def __json__(self):
+         ...         return {"x":self.x, "y":self.y}
+         ...
+         >>> json.dumps(Point(10, 20))
+         '{"x":10,"y":20}'
 
 
 Exceptions
