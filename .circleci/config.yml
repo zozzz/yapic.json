@@ -9,7 +9,7 @@ executors:
     docker:
       - image: quay.io/pypa/manylinux1_i686
     environment:
-      PYBIN: linux32 /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
+      PYBIN: /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
 
   x64:
     parameters:
