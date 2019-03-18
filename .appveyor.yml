@@ -27,7 +27,7 @@ install:
   - cmd: python -m pip install --upgrade pip setuptools wheel pytest
 
 build_script:
-  - ps: Remove-Item -LiteralPath pytest.py
+  # - ps: Remove-Item -LiteralPath pytest.py
   - cmd: python setup.py bdist_wheel
   - ps: Invoke-Expression "python -m pip install --upgrade $(Get-Childitem –Path dist -Include *.whl -File -Recurse)"
   - cmd: python -m pytest -x -s -v tests
