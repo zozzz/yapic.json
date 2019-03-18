@@ -1,12 +1,12 @@
 version: 2
 
 _vars:
-  - &docker-x86-py37
-    docker:
-      - image: quay.io/pypa/manylinux1_i686
-        environment:
-          PYBIN: /opt/python/cp37-cp37m/bin/python3
-    working_directory: ~/repo
+  # - &docker-x86-py37
+  #   docker:
+  #     - image: quay.io/pypa/manylinux1_i686
+  #       environment:
+  #         PYBIN: /opt/python/cp37-cp37m/bin/python3
+  #   working_directory: ~/repo
 
   - &docker-x64-py37
     docker:
@@ -67,13 +67,13 @@ _vars:
     tags: { only: /^\d+\.\d+\.\d+$/ }
 
 jobs:
-  x86-py37-prepare:
-    <<: *docker-x86-py37
-    <<: *job-prepare
+  # x86-py37-prepare:
+  #   <<: *docker-x86-py37
+  #   <<: *job-prepare
 
-  x86-py37-release:
-    <<: *docker-x86-py37
-    <<: *job-release
+  # x86-py37-release:
+  #   <<: *docker-x86-py37
+  #   <<: *job-release
 
   x64-py37-prepare:
     <<: *docker-x64-py37
