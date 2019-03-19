@@ -145,4 +145,18 @@ setup(
     cmdclass={
         "test": PyTest,
         "benchmark": Benchmark
-    })
+    },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: Unix",
+        "Programming Language :: C++",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3 :: Only",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Utilities",
+        "Typing :: Typed",
+    ])
