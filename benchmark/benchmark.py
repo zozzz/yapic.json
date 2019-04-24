@@ -57,6 +57,7 @@ class Benchmark(metaclass=BenchmarkMeta):
         modes = []
         skip_comparsion = False
         if only:
+            only = only.split()
             if "ENCODE" in only:
                 modes.append("ENCODE")
                 only.remove("ENCODE")
@@ -94,6 +95,7 @@ class Benchmark(metaclass=BenchmarkMeta):
                     storage["times"].append((result / Decimal(cls.ITERATIONS)) * (Decimal(1000) * Decimal(1000)))
             except Exception as e:
                 storage["error"] = e
+
         return runner
 
     @classmethod
@@ -113,8 +115,7 @@ class Benchmark(metaclass=BenchmarkMeta):
             max=max_,
             mean=mean,
             call_sec=(Decimal(data["rounds"]) * Decimal(data["iterations"])) / sum_,
-            std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"])))
-        )
+            std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"]))))
         res["score"] = res["mean"]
         return res
 
@@ -198,14 +199,13 @@ class Table:
         self.width = width
         self.lineno = 0
         width = width - 4 - (libname_max + 5)
-        self.columns = [
-            ["Title", "title", libname_max + 5, None, None],
-            ["Min", "min", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-            ["Max", "max", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-            ["Mean", "mean", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-            ["StdDev", "std_dev", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-            ["Call/sec", "call_sec", 0, lambda a, b: a > b, lambda a, b: a < b]
-        ]
+        self.columns = [["Title", "title", libname_max + 5, None, None],
+                        ["Min", "min", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+                        ["Max", "max", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+                        ["Mean", "mean", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+                        ["StdDev", "std_dev",
+                         round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+                        ["Call/sec", "call_sec", 0, lambda a, b: a > b, lambda a, b: a < b]]
 
         used = 0
         for i, x in enumerate(self.columns):

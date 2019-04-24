@@ -3,6 +3,7 @@
 from os import path
 from io import StringIO
 from datetime import timezone, timedelta
+from collections.abc import ItemsView
 import math
 import decimal
 import codecs
@@ -161,16 +162,14 @@ class LatencyDefaultFn(Benchmark):
         def wrapped(*args, **kwargs):
             kwargs["default"] = self.default
             dumps(*args, **kwargs)
+
         return wrapped
 
 
 class LatencyDateTime(Benchmark):
     """ Latency: Datetime """
 
-    DECODER = (
-        ("yapic", yapic_json.loads),
-        ("rapidjson", rapidjson.loads)
-    )
+    DECODER = (("yapic", yapic_json.loads), ("rapidjson", rapidjson.loads))
 
     def get_encode_data(self):
         return datetime(2017, 4, 3, 21, 40, 12)
@@ -251,7 +250,8 @@ class StringMixedUnicodeTextToAscii(Benchmark):
     ITERATIONS = 100
 
     def get_encode_data(self):
-        return ("𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" + "ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY Z" + "Език за програмиране е изк" + "Áí óéÉ\náÍÓ") * 200
+        return ("𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" + "ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY Z" + "Език за програмиране е изк" +
+                "Áí óéÉ\náÍÓ") * 200
 
 
 class ListOfInts(Benchmark):
@@ -309,11 +309,9 @@ class ListOfFloatsAsDecimal(Benchmark):
     ENCODER = None
     ITERATIONS = 100
 
-    DECODER = (
-        ("yapic", lambda v: yapic_json.loads(v, parse_float=decimal.Decimal)),
-        ("python", lambda v: py_json.loads(v, parse_float=decimal.Decimal)),
-        ("rapidjson", lambda v: rapidjson.loads(v, use_decimal=True))
-    )
+    DECODER = (("yapic", lambda v: yapic_json.loads(v, parse_float=decimal.Decimal)),
+               ("python", lambda v: py_json.loads(v, parse_float=decimal.Decimal)),
+               ("rapidjson", lambda v: rapidjson.loads(v, use_decimal=True)))
 
     def get_encode_data(self):
         return [i * math.pi for i in range(100000, 100300)]
@@ -402,7 +400,8 @@ class ListOfStringsMixed(Benchmark):
     def get_encode_data(self):
         res = []
         for x in range(256):
-            res.append("𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ")
+            res.append(
+                "𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ")
         return res
 
 
@@ -474,12 +473,7 @@ class LargeDataFormattedToAscii(LargeDataToAscii):
 
 
 class ToFile:
-    ENCODER = (
-        ("yapic", yapic_json.dump),
-        ("python", py_json.dump),
-        ("simple", simplejson.dump),
-        ("ujson", ujson.dump)
-    )
+    ENCODER = (("yapic", yapic_json.dump), ("python", py_json.dump), ("simple", simplejson.dump), ("ujson", ujson.dump))
 
     DECODER = None
 
@@ -495,6 +489,7 @@ class ToFile:
             dump(obj, self.string_io, **kwargs)
             self.string_io.truncate(0)
             self.string_io.seek(0)
+
         return wrapped
 
 
@@ -521,8 +516,65 @@ class MypyDataToAscii(Benchmark):
     ITERATIONS = 100
 
     def get_encode_data(self):
-        with codecs.open(path.join(path.dirname(__file__), "large-data.json"), "r", "utf-8") as f:
+        with codecs.open(path.join(path.dirname(__file__), "builtins.data.json"), "r", "utf-8") as f:
             return py_json.load(f)
+
+
+class ListViewBase(Benchmark):
+    """ ListView dict """
+
+    ENCODER = (("yapic", yapic_json.dumps), )
+    DECODER = None
+    ITERATIONS = 100
+
+    def _get_dict(self):
+        with codecs.open(path.join(path.dirname(__file__), "builtins.data.json"), "r", "utf-8") as f:
+            return py_json.load(f)
+
+    def get_encode_data(self):
+        return self._get_dict()
+
+
+class ListViewDictItems(ListViewBase):
+    """ ListView dict.items() """
+
+    class dict_items:
+        def __init__(self, data):
+            self.data = data
+
+        def __json__(self):
+            return self.data.items()
+
+    def get_encode_data(self):
+        return self.dict_items(self._get_dict())
+
+
+class ListViewIterator(ListViewBase):
+    """ ListView iterator """
+
+    class lv_factory:
+        def __init__(self, data):
+            self.data = data
+
+        def __json__(self):
+            return ItemsView(self.data)
+
+    def get_encode_data(self):
+        return self.lv_factory(self._get_dict())
+
+
+class ListViewDictCopy(ListViewBase):
+    """ ListView similar with dict creation from iterable """
+
+    class dict_factory:
+        def __init__(self, data):
+            self.data = data
+
+        def __json__(self):
+            return dict(self.data.items())
+
+    def get_encode_data(self):
+        return self.dict_factory(self._get_dict())
 
 
 if __name__ == "__main__":

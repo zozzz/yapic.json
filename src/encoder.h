@@ -2,7 +2,7 @@
 #define DEFBD7C4_2133_C63D_128D_F5D3D59111EF
 
 #include <limits>
-
+#include <yapic/pyptr.hpp>
 
 #include "../libs/double-conversion/double-conversion/double-conversion.h"
 #include "config.h"
@@ -81,7 +81,6 @@ class Encoder {
 		}
 
 		inline bool Encode(PyObject* obj) {
-			// printf("Encode %s\n", PyUnicode_1BYTE_DATA(PyObject_Repr(obj)));
 			assert(obj != NULL);
 
 			if (PyUnicode_CheckExact(obj)) {
@@ -130,6 +129,8 @@ class Encoder {
 				Encoder_AppendFast('l');
 				Encoder_AppendFast('l');
 				Encoder_RETURN_TRUE;
+			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
+				return EncodeItemsView(obj);
 			} else if (PyAnySet_Check(obj)) {
 				return EncodeIterable(obj);
 			} else if (PyObject_HasAttr(obj, toJsonMethodName)) {
@@ -544,6 +545,120 @@ class Encoder {
 			Encoder_AppendFast('}');
 			Encoder_LeaveRecursive();
 			Encoder_RETURN_TRUE;
+		}
+
+		// Encoder_FN(_EncodeItemsView) {
+		// 	Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
+		// 	Encoder_AppendFast('{');
+
+		// 	PyPtr<> iterator = PyObject_GetIter(obj);
+		// 	if (!iterator) {
+		// 		Encoder_RETURN_FALSE;
+		// 	}
+
+		// 	PyPtr<PyTupleObject> item;
+		// 	PyObject *key;
+		// 	PyObject *value;
+		// 	register Py_ssize_t length = 0;
+
+		// 	while ((item = PyIter_Next(iterator))) {
+		// 		if (EXPECT_TRUE(PyTuple_CheckExact(item) && PyTuple_GET_SIZE(item) == 2)) {
+		// 			key = PyTuple_GET_ITEM(item, 0);
+		// 			value = PyTuple_GET_ITEM(item, 1);
+
+		// 			Encoder_AppendFast('"');
+		// 			if (EXPECT_TRUE(__encode_dict_key(key))) {
+		// 				Encoder_AppendFast('"');
+		// 				Encoder_AppendFast(':');
+		// 				if (EXPECT_TRUE(Encode(value))) {
+		// 					Encoder_AppendFast(',');
+		// 					++length;
+		// 				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewValue, value, key)
+		// 				} else {
+		// 					Encoder_RETURN_FALSE;
+		// 				}
+		// 			} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewKey, key)
+		// 			} else {
+		// 				Encoder_RETURN_FALSE;
+		// 			}
+		// 		} else {
+		// 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_ItemsViewTuple, item.AsObject());
+		// 			Encoder_RETURN_FALSE;
+		// 		}
+		// 	}
+
+		// 	if (PyErr_Occurred()) {
+		// 		Encoder_RETURN_FALSE;
+		// 	}
+
+		// 	if (length > 0) {
+		// 		--buffer.cursor; // overwrite last ','
+		// 	}
+
+		// 	Encoder_AppendFast('}');
+		// 	Encoder_LeaveRecursive();
+		// 	Encoder_RETURN_TRUE;
+		// }
+
+
+		Encoder_FN(EncodeItemsView) {
+			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
+			Encoder_AppendFast('{');
+
+			PyObject* iterator = PyObject_GetIter(obj);
+			if (!iterator) {
+				Encoder_RETURN_FALSE;
+			}
+
+			PyObject* item = NULL;
+			PyObject *key;
+			PyObject *value;
+			register Py_ssize_t length = 0;
+
+			while ((item = PyIter_Next(iterator))) {
+				if (EXPECT_TRUE(PyTuple_CheckExact(item)) && EXPECT_TRUE(PyTuple_GET_SIZE(item) == 2)) {
+					key = PyTuple_GET_ITEM(item, 0);
+					value = PyTuple_GET_ITEM(item, 1);
+
+					Encoder_AppendFast('"');
+					if (EXPECT_TRUE(__encode_dict_key(key))) {
+						Encoder_AppendFast('"');
+						Encoder_AppendFast(':');
+						if (EXPECT_TRUE(Encode(value))) {
+							Encoder_AppendFast(',');
+							++length;
+						} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewValue, value, key)
+						} else {
+							goto error;
+						}
+					} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewKey, key)
+					} else {
+						goto error;
+					}
+				} else {
+					PyErr_Format(Module::State()->EncodeError, YapicJson_Err_ItemsViewTuple, item);
+					goto error;
+				}
+				Py_DECREF(item);
+			}
+			Py_DECREF(iterator);
+
+			if (PyErr_Occurred()) {
+				goto error;
+			}
+
+			if (length > 0) {
+				--buffer.cursor; // overwrite last ','
+			}
+
+			Encoder_AppendFast('}');
+			Encoder_LeaveRecursive();
+			Encoder_RETURN_TRUE;
+
+			error:
+				Py_DECREF(iterator);
+				Py_XDECREF(item);
+				Encoder_RETURN_FALSE;
 		}
 
 		Encoder_FN(EncodeList) {

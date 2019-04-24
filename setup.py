@@ -61,7 +61,7 @@ def cmd_prerun(cmd, requirements):
             if dp not in sys.path:
                 sys.path.insert(0, dp)
 
-    cmd.run_command('build_ext')
+    cmd.run_command('build')
 
     ext = cmd.get_finalized_command("build_ext")
     ep = str(Path(ext.build_lib).absolute())

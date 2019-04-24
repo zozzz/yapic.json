@@ -15,6 +15,7 @@ public:
 	using ModuleRef = Yapic::ModuleRef<Module>;
 
 	ModuleRef PyTimezone;
+	ModuleRef ItemsView;
 	ModuleVar PyUTCTimezone;
 
 	ModuleVar STR_TZINFO;
@@ -31,6 +32,7 @@ public:
 		PyDateTime_IMPORT;
 
 		state->PyTimezone.Import("datetime", "timezone");
+		state->ItemsView.Import("collections.abc", "ItemsView");
 		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
 
 		state->STR_TZINFO = "tzinfo";

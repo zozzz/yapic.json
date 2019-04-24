@@ -5,6 +5,8 @@
 #define YapicJson_Err_MaxRecursion "Maximum recursion level reached, while "
 #define YapicJson_Err_MaxRecursion_DictKey "encoding dict key %R."
 #define YapicJson_Err_MaxRecursion_DictValue "encoding dict entry %R at %R key."
+#define YapicJson_Err_MaxRecursion_ItemsViewKey "encoding ItemsView key %R."
+#define YapicJson_Err_MaxRecursion_ItemsViewValue "encoding ItemsView entry %R at %R key."
 #define YapicJson_Err_MaxRecursion_ListValue "encoding list entry %R at %ld index."
 // #define YapicJson_Err_MaxRecursion_IterValue "encoding item %R of the iterable object %R."
 #define YapicJson_Err_MaxRecursion_IterValue "encoding iterable entry %R at %ld index."
@@ -29,5 +31,6 @@
 #define YapicJson_Err_InvalidEscape "Invalid escaped character while decoding 'string'"
 #define YapicJson_Err_NumberIsTooBig "Number is too big"
 #define YapicJson_Err_JunkTrailingData "Found junk data after valid JSON data"
+#define YapicJson_Err_ItemsViewTuple "ItemsView iterable must returns with (key, value) tuple, but returned with: %R"
 
 #endif /* E513ED4E_C133_C63C_14FB_4A86B0AAA2C7 */
