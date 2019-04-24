@@ -31,6 +31,18 @@ Features
 *  UTF-8 encoding & decoding support
 *  Accurate float encoding & decoding
 *  ``date`` / ``datetime`` / ``time`` encondig & decoding support
+*  `ItemsView <https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView>`_ encoding support
+
+   .. code-block:: python
+
+      from collections.abc import ItemsView
+
+      class MyDictGenerator(ItemsView):
+         def __iter__(self):
+            yield ("some_key", "some_value")
+            yield ("meaning_of_life", 42)
+
+      json.dumps(MyDictGenerator()) == '{"some_key":"some_value","meaning_of_life":42}'
 
 
 Requirements
