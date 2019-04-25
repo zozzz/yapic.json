@@ -10,6 +10,17 @@ def test_json_method_encode(ensure_ascii):
     assert yapic_json.dumps(O(), ensure_ascii=ensure_ascii) == '{"key":"value"}'
 
 
+def test_json_method_priority(ensure_ascii):
+    class O:
+        def __iter__(self):
+            yield "WRONG VALUE"
+
+        def __json__(self):
+            return dict(key="value")
+
+    assert yapic_json.dumps(O(), ensure_ascii=ensure_ascii) == '{"key":"value"}'
+
+
 def test_json_method_encode_exception(ensure_ascii):
     class Ex(Exception):
         pass

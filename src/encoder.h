@@ -101,8 +101,6 @@ class Encoder {
 				return EncodeTime(obj);
 			} else if (PyDateTime_CheckExact(obj)) {
 				return EncodeDateTime(obj);
-			} else if (PyIter_Check(obj)) {
-				return EncodeIterable(obj);
 			} else if (PyLong_CheckExact(obj)) {
 				return EncodeLong(obj);
 			} else if (PyFloat_CheckExact(obj)) {
@@ -129,12 +127,14 @@ class Encoder {
 				Encoder_AppendFast('l');
 				Encoder_AppendFast('l');
 				Encoder_RETURN_TRUE;
-			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
-				return EncodeItemsView(obj);
 			} else if (PyAnySet_Check(obj)) {
 				return EncodeIterable(obj);
 			} else if (PyObject_HasAttr(obj, toJsonMethodName)) {
 				return EncodeWithJsonMethod<false>(obj);
+			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
+				return EncodeItemsView(obj);
+			} else if (PyIter_Check(obj)) {
+				return EncodeIterable(obj);
 			} else if (PyCallable_Check(defaultFn)) {
 				return EncodeWithDefault<false>(obj);
 			}
