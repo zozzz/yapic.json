@@ -376,10 +376,28 @@ class Encoder {
 			Encoder_AppendFast('0' + (value / 10)); \
 			Encoder_AppendFast('0' + (value % 10));
 
-		#define EncodeDT_AppendInt3(value) \
-			Encoder_AppendFast('0' + (value / 100)); \
-			Encoder_AppendFast('0' + ((value / 10) % 10)); \
-			Encoder_AppendFast('0' + (value % 10));
+		// #define EncodeDT_AppendInt3(value) \
+		// 	Encoder_AppendFast('0' + (value / 100)); \
+		// 	Encoder_AppendFast('0' + ((value / 10) % 10)); \
+		// 	Encoder_AppendFast('0' + (value % 10));
+
+		#define EncodeDT_MILIS_MAX_LENGTH 6
+		#define EncodeDT_AppendMilis(value, ms_size) \
+			{ \
+				ms_size = value; \
+				CHOUT *end_position = buffer.cursor + EncodeDT_MILIS_MAX_LENGTH; \
+				CHOUT *saved_end_position = end_position; \
+				CHOUT digit; \
+				do { \
+					digit = (48 + (ms_size % 10)); \
+					if (digit != '0' || end_position != saved_end_position) { \
+						*(--end_position) = digit; \
+					} \
+				} while ((ms_size /= 10) > 0); \
+				ms_size = saved_end_position - end_position; \
+				memmove(buffer.cursor, end_position, sizeof(CHOUT) * ms_size); \
+				buffer.cursor += ms_size; \
+			}
 
 		#define EncodeDT_AppendInt4(value) \
 			Encoder_AppendFast('0' + (value / 1000)); \
@@ -406,13 +424,15 @@ class Encoder {
 		}
 
 		// TODO: maybe tz info
+		// "22:54:12.123456+01:00"
 		Encoder_FN(EncodeTime) {
-			Encoder_EnsureCapacity(14 + Encoder_EXTRA_CAPACITY);
+			Encoder_EnsureCapacity(23 + Encoder_EXTRA_CAPACITY);
 
 			int h = PyDateTime_TIME_GET_HOUR(obj);
 			int m = PyDateTime_TIME_GET_MINUTE(obj);
 			int s = PyDateTime_TIME_GET_SECOND(obj);
 			int ms = PyDateTime_TIME_GET_MICROSECOND(obj);
+			size_t ms_size = 0;
 
 			Encoder_AppendFast('"');
 			EncodeDT_AppendInt2(h);
@@ -424,16 +444,16 @@ class Encoder {
 			}
 			if (ms > 0) {
 				Encoder_AppendFast('.');
-				EncodeDT_AppendInt3(ms);
+				EncodeDT_AppendMilis(ms, ms_size);
 			}
 			Encoder_AppendFast('"');
 
 			Encoder_RETURN_TRUE;
 		}
 
-		// "2017-04-02T22:54:12+01:00"
+		// "2017-04-02T22:54:12.123456+01:00"
 		Encoder_FN(EncodeDateTime) {
-			Encoder_EnsureCapacity(27 + Encoder_EXTRA_CAPACITY);
+			Encoder_EnsureCapacity(34 + Encoder_EXTRA_CAPACITY);
 
 			int dy = PyDateTime_GET_YEAR(obj);
 			int dm = PyDateTime_GET_MONTH(obj);
@@ -442,6 +462,7 @@ class Encoder {
 			int tm = PyDateTime_DATE_GET_MINUTE(obj);
 			int ts = PyDateTime_DATE_GET_SECOND(obj);
 			int tms = PyDateTime_DATE_GET_MICROSECOND(obj);
+			size_t ms_size = 0;
 
 			Encoder_AppendFast('"');
 			EncodeDT_AppendInt4(dy);
@@ -457,7 +478,7 @@ class Encoder {
 			EncodeDT_AppendInt2(ts);
 			if (tms > 0) {
 				Encoder_AppendFast('.');
-				EncodeDT_AppendInt3(tms);
+				EncodeDT_AppendMilis(tms, ms_size);
 			}
 
 			PyObject* tzinfo = PyObject_GetAttr(obj, Module::State()->STR_TZINFO);
@@ -473,8 +494,8 @@ class Encoder {
 					int utcoffset = ((PyDateTime_Delta*)delta)->seconds + ((PyDateTime_Delta*)delta)->days * 86400;
 					Py_DECREF(delta);
 
-					if (tms > 0) {
-						*(buffer.cursor - 13) = 'T';
+					if (ms_size > 0) {
+						*(buffer.cursor - 10 - ms_size) = 'T';
 					} else {
 						*(buffer.cursor - 9) = 'T';
 					}
