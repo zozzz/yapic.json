@@ -33,4 +33,4 @@ def test_nan_decode():
 
 def test_uuid_encode():
     id = UUID("af113bd3-cd8e-40b4-8bda-e61752c3b2bf")
-    assert yapic_json.dumps(id) == "af113bd3-cd8e-40b4-8bda-e61752c3b2bf"
+    assert yapic_json.dumps(id) == '"af113bd3-cd8e-40b4-8bda-e61752c3b2bf"'

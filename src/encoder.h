@@ -88,6 +88,8 @@ class Encoder {
 				if (EXPECT_TRUE(EncodeString(obj))) {
 					Encoder_AppendFast('"');
 					Encoder_RETURN_TRUE;
+				} else {
+					Encoder_RETURN_FALSE;
 				}
 			} else if (PyDict_CheckExact(obj)) {
 				return EncodeDict(obj);
@@ -134,7 +136,14 @@ class Encoder {
 			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
 				return EncodeItemsView(obj);
 			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
-				return EncodeUUID(obj);
+				Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
+				Encoder_AppendFast('"');
+				if (EXPECT_TRUE(EncodeUUID(obj))) {
+					Encoder_AppendFast('"');
+					Encoder_RETURN_TRUE;
+				} else {
+					Encoder_RETURN_FALSE;
+				}
 			} else if (PyIter_Check(obj)) {
 				return EncodeIterable(obj);
 			} else if (PyCallable_Check(defaultFn)) {
