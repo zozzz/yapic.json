@@ -133,6 +133,8 @@ class Encoder {
 				return EncodeWithJsonMethod<false>(obj);
 			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
 				return EncodeItemsView(obj);
+			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
+				return EncodeUUID(obj);
 			} else if (PyIter_Check(obj)) {
 				return EncodeIterable(obj);
 			} else if (PyCallable_Check(defaultFn)) {
@@ -177,6 +179,8 @@ class Encoder {
 				return EncodeWithJsonMethod<true>(obj);
 			} else if (PyCallable_Check(defaultFn)) {
 				return EncodeWithDefault<true>(obj);
+			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
+				return EncodeUUID(obj);
 			}
 
 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
@@ -528,6 +532,17 @@ class Encoder {
 			Encoder_AppendFast('"');
 
 			Encoder_RETURN_TRUE;
+		}
+
+		Encoder_FN(EncodeUUID) {
+			PyObject* str = PyObject_Str(obj);
+			if (str != NULL) {
+				bool res = EncodeString(str);
+				Py_DECREF(str);
+				return res;
+			} else {
+				Encoder_RETURN_FALSE;
+			}
 		}
 
 		Encoder_FN(EncodeDict) {

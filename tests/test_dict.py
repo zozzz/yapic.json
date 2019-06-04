@@ -1,5 +1,6 @@
 import pytest
 import json as py_json
+from uuid import UUID
 from collections.abc import ItemsView
 from yapic import json as yapic_json
 
@@ -45,6 +46,7 @@ large_dict = {
     ({1: 1}, '{"1":1}'),
     ({100: 100}, '{"100":100}'),
     ({3.14: 3.14}, '{"3.14":3.14}'),
+    ({UUID("f4aa36f7-254b-472d-9dc6-e030f244054a"): 1}, '{"f4aa36f7-254b-472d-9dc6-e030f244054a":1}'),
     (large_dict, py_json.dumps)
 ])
 def test_dict_encode(value, expected, ensure_ascii):
