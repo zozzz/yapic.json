@@ -137,6 +137,8 @@ class Encoder {
 				return EncodeIterable(obj);
 			} else if (PyCallable_Check(defaultFn)) {
 				return EncodeWithDefault<false>(obj);
+			} else if (Module::State()->Decimal.CheckExact(obj)) {
+				return EncodeDecimal(obj);
 			}
 
 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_NotSerializable, obj);
@@ -177,6 +179,8 @@ class Encoder {
 				return EncodeWithJsonMethod<true>(obj);
 			} else if (PyCallable_Check(defaultFn)) {
 				return EncodeWithDefault<true>(obj);
+			} else if (Module::State()->Decimal.CheckExact(obj)) {
+				return EncodeDecimal(obj);
 			}
 
 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
@@ -370,6 +374,16 @@ class Encoder {
 				}
 			}
 			Encoder_RETURN_TRUE;
+		}
+
+		Encoder_FN(EncodeDecimal) {
+			PyObject* str = PyObject_Str(obj);
+			if (str == NULL) {
+				Encoder_RETURN_FALSE;
+			}
+			bool res = EncodeString(str);
+			Py_DECREF(str);
+			return res;
 		}
 
 		#define EncodeDT_AppendInt2(value) \
