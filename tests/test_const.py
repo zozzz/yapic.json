@@ -1,5 +1,6 @@
 import pytest
 import math
+from uuid import UUID
 from yapic import json as yapic_json
 
 
@@ -28,3 +29,8 @@ def test_const_decode(value, expected):
 
 def test_nan_decode():
     assert math.isnan(yapic_json.loads("NaN"))
+
+
+def test_uuid_encode():
+    id = UUID("af113bd3-cd8e-40b4-8bda-e61752c3b2bf")
+    assert yapic_json.dumps(id) == '"af113bd3-cd8e-40b4-8bda-e61752c3b2bf"'

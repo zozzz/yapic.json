@@ -18,6 +18,7 @@ public:
 	ModuleRef ItemsView;
 	ModuleRef Decimal;
 	ModuleVar PyUTCTimezone;
+	ModuleRef UUID;
 
 	ModuleVar STR_TZINFO;
 	ModuleVar STR_UTCOFFSET;
@@ -36,6 +37,7 @@ public:
 		state->ItemsView.Import("collections.abc", "ItemsView");
 		state->Decimal.Import("decimal", "Decimal");
 		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
+		state->UUID.Import("uuid", "UUID");
 
 		state->STR_TZINFO = "tzinfo";
 		state->STR_UTCOFFSET = "utcoffset";
