@@ -109,6 +109,15 @@ workflows:
           requires: [prepare]
           filters: *release-filter
 
+  x86-py38:
+    jobs:
+      - prepare:
+          exec: { name: x86, pyver: cp38 }
+      - release:
+          exec: { name: x86, pyver: cp38 }
+          requires: [prepare]
+          filters: *release-filter
+
   x64-py35:
     jobs:
       - prepare:
@@ -133,6 +142,15 @@ workflows:
           exec: { name: x64, pyver: cp37 }
       - release:
           exec: { name: x64, pyver: cp37 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x64-py38:
+    jobs:
+      - prepare:
+          exec: { name: x64, pyver: cp38 }
+      - release:
+          exec: { name: x64, pyver: cp38 }
           requires: [prepare]
           filters: *release-filter
       # - prepare:

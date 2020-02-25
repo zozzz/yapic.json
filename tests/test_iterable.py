@@ -3,7 +3,7 @@ from yapic import json as yapic_json
 from yapic.json import JsonEncodeError
 
 
-@pytest.mark.only
+# @pytest.mark.only
 def test_iterable_encode_basic(ensure_ascii):
     assert yapic_json.dumps(iter([1, 2, 3, 4, 5]), ensure_ascii=ensure_ascii) == "[1,2,3,4,5]"
 
