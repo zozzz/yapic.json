@@ -4,22 +4,22 @@ executors:
   x86:
     parameters:
       pyver:
-        description: "Python version like: cp37"
+        description: "Python version like: cp37-cp37m, to get available version, run: docker run --rm quay.io/pypa/manylinux1_i686 ls -la /opt/python"
         type: string
     docker:
       - image: quay.io/pypa/manylinux1_i686
     environment:
-      PYBIN: linux32 /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
+      PYBIN: linux32 /opt/python/<< parameters.pyver >>/bin/python3
 
   x64:
     parameters:
       pyver:
-        description: "Python version like: cp37"
+        description: "Python version like: cp37-cp37m, to get available version, run: docker run --rm quay.io/pypa/manylinux1_x86_64 ls -la /opt/python"
         type: string
     docker:
       - image: quay.io/pypa/manylinux1_x86_64
     environment:
-      PYBIN: /opt/python/<< parameters.pyver >>-<< parameters.pyver >>m/bin/python3
+      PYBIN: /opt/python/<< parameters.pyver >>/bin/python3
 
 jobs:
   prepare:
@@ -85,72 +85,72 @@ workflows:
   x86-py35:
     jobs:
       - prepare:
-          exec: { name: x86, pyver: cp35 }
+          exec: { name: x86, pyver: cp35-cp35m }
       - release:
-          exec: { name: x86, pyver: cp35 }
+          exec: { name: x86, pyver: cp35-cp35m }
           requires: [prepare]
           filters: *release-filter
 
   x86-py36:
     jobs:
       - prepare:
-          exec: { name: x86, pyver: cp36 }
+          exec: { name: x86, pyver: cp36-cp36m }
       - release:
-          exec: { name: x86, pyver: cp36 }
+          exec: { name: x86, pyver: cp36-cp36m }
           requires: [prepare]
           filters: *release-filter
 
   x86-py37:
     jobs:
       - prepare:
-          exec: { name: x86, pyver: cp37 }
+          exec: { name: x86, pyver: cp37-cp37m }
       - release:
-          exec: { name: x86, pyver: cp37 }
+          exec: { name: x86, pyver: cp37-cp37m }
           requires: [prepare]
           filters: *release-filter
 
   x86-py38:
     jobs:
       - prepare:
-          exec: { name: x86, pyver: cp38 }
+          exec: { name: x86, pyver: cp38-cp38 }
       - release:
-          exec: { name: x86, pyver: cp38 }
+          exec: { name: x86, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
   x64-py35:
     jobs:
       - prepare:
-          exec: { name: x64, pyver: cp35 }
+          exec: { name: x64, pyver: cp35-cp35m }
       - release:
-          exec: { name: x64, pyver: cp35 }
+          exec: { name: x64, pyver: cp35-cp35m }
           requires: [prepare]
           filters: *release-filter
 
   x64-py36:
     jobs:
       - prepare:
-          exec: { name: x64, pyver: cp36 }
+          exec: { name: x64, pyver: cp36-cp36m }
       - release:
-          exec: { name: x64, pyver: cp36 }
+          exec: { name: x64, pyver: cp36-cp36m }
           requires: [prepare]
           filters: *release-filter
 
   x64-py37:
     jobs:
       - prepare:
-          exec: { name: x64, pyver: cp37 }
+          exec: { name: x64, pyver: cp37-cp37m }
       - release:
-          exec: { name: x64, pyver: cp37 }
+          exec: { name: x64, pyver: cp37-cp37m }
           requires: [prepare]
           filters: *release-filter
 
   x64-py38:
     jobs:
       - prepare:
-          exec: { name: x64, pyver: cp38 }
+          exec: { name: x64, pyver: cp38-cp38 }
       - release:
-          exec: { name: x64, pyver: cp38 }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
       # - prepare:
