@@ -7,7 +7,7 @@ from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools import Command
 
-VERSION = "1.3.2"
+VERSION = "1.3.3"
 
 define_macros = {
     "YAPIC_JSON_VERSION_MAJOR": VERSION.split(".")[0],
@@ -42,15 +42,14 @@ sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
 depends = glob("src/*.h")
 
-extension = Extension(
-    name="yapic.json._json",
-    language="c++",
-    sources=sources,
-    depends=depends,
-    include_dirs=["libs/double-conversion", "libs/yapic.core/src/yapic/core/include"],
-    define_macros=list(define_macros.items()),
-    undef_macros=list(undef_macros),
-    extra_compile_args=extra_compile_args)
+extension = Extension(name="yapic.json._json",
+                      language="c++",
+                      sources=sources,
+                      depends=depends,
+                      include_dirs=["libs/double-conversion", "libs/yapic.core/src/yapic/core/include"],
+                      define_macros=list(define_macros.items()),
+                      undef_macros=list(undef_macros),
+                      extra_compile_args=extra_compile_args)
 
 
 def cmd_prerun(cmd, requirements):
@@ -126,38 +125,37 @@ class Benchmark(Command):
         Benchmark.run_all(self.file)
 
 
-setup(
-    name="yapic.json",
-    version=VERSION,
-    url="https://github.com/zozzz/yapic.json/",
-    author="Zoltán Vetési",
-    author_email="vetesi.zoltan@gmail.com",
-    long_description=(Path(__file__).parent / "README.rst").read_text(encoding="utf-8"),
-    license="BSD",
-    packages=["yapic.json"],
-    package_dir={"yapic.json": "src"},
-    package_data={"yapic.json": ["_json.pyi"]},
-    ext_modules=[extension],
-    description="Fastest JSON encode / decode library.",
-    tests_require=["pytest"],
-    extras_require={"benchmark": ["simplejson", "ujson", "python-rapidjson", "termcolor", "metamagic.json"]},
-    python_requires=">=3.5",
-    cmdclass={
-        "test": PyTest,
-        "benchmark": Benchmark
-    },
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "License :: OSI Approved :: BSD License",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: Unix",
-        "Programming Language :: C++",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Utilities",
-        "Typing :: Typed",
-    ])
+setup(name="yapic.json",
+      version=VERSION,
+      url="https://github.com/zozzz/yapic.json/",
+      author="Zoltán Vetési",
+      author_email="vetesi.zoltan@gmail.com",
+      long_description=(Path(__file__).parent / "README.rst").read_text(encoding="utf-8"),
+      license="BSD",
+      packages=["yapic.json"],
+      package_dir={"yapic.json": "src"},
+      package_data={"yapic.json": ["_json.pyi"]},
+      ext_modules=[extension],
+      description="Fastest JSON encode / decode library.",
+      tests_require=["pytest"],
+      extras_require={"benchmark": ["simplejson", "ujson", "python-rapidjson", "termcolor", "metamagic.json"]},
+      python_requires=">=3.5",
+      cmdclass={
+          "test": PyTest,
+          "benchmark": Benchmark
+      },
+      classifiers=[
+          "Development Status :: 5 - Production/Stable",
+          "License :: OSI Approved :: BSD License",
+          "Operating System :: Microsoft :: Windows",
+          "Operating System :: Unix",
+          "Programming Language :: C++",
+          "Programming Language :: Python :: 3.5",
+          "Programming Language :: Python :: 3.6",
+          "Programming Language :: Python :: 3.7",
+          "Programming Language :: Python :: 3 :: Only",
+          "Programming Language :: Python :: Implementation :: CPython",
+          "Topic :: Software Development :: Libraries :: Python Modules",
+          "Topic :: Utilities",
+          "Typing :: Typed",
+      ])
