@@ -97,12 +97,12 @@ class Encoder {
 				return EncodeList(obj);
 			} else if (PyTuple_CheckExact(obj)) {
 				return EncodeTuple(obj);
-			} else if (PyDate_CheckExact(obj)) {
-				return EncodeDate(obj);
-			} else if (PyTime_CheckExact(obj)) {
-				return EncodeTime(obj);
-			} else if (PyDateTime_CheckExact(obj)) {
+			} else if (PyDateTime_Check(obj)) {
 				return EncodeDateTime(obj);
+			} else if (PyDate_Check(obj)) {
+				return EncodeDate(obj);
+			} else if (PyTime_Check(obj)) {
+				return EncodeTime(obj);
 			} else if (PyLong_CheckExact(obj)) {
 				return EncodeLong(obj);
 			} else if (PyFloat_CheckExact(obj)) {

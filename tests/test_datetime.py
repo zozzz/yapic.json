@@ -1,94 +1,109 @@
 import pytest
-import datetime
-from datetime import timezone
+from datetime import timezone, date, datetime, time, tzinfo, timedelta
 from yapic import json as yapic_json
 import json as py_json
 
 
-class TZInfo(datetime.tzinfo):
+class TZInfo(tzinfo):
     def __init__(self, offset):
         self.offset = offset
 
     def utcoffset(self, date):
-        return datetime.timedelta(seconds=self.offset)
+        return timedelta(seconds=self.offset)
+
+
+class MyDate(date):
+    pass
+
+
+class MyDateTime(datetime):
+    pass
+
+
+class MyTime(time):
+    pass
 
 
 @pytest.mark.parametrize(
     "value,expected",
-    [(datetime.date(2011, 4, 30), '"2011-04-30"'), (datetime.date(1987, 12, 1), '"1987-12-01"'),
-     (datetime.time(12, 32), '"12:32"'), (datetime.time(12, 32, 23), '"12:32:23"'),
-     (datetime.time(12, 32, 23, 345), '"12:32:23.345"'), (datetime.time(12, 32, 0, 1), '"12:32:00.1"'),
-     (datetime.time(12, 32, 0, 12), '"12:32:00.12"'), (datetime.time(12, 32, 0, 123), '"12:32:00.123"'),
-     (datetime.time(12, 32, 0, 1234), '"12:32:00.1234"'), (datetime.time(12, 32, 0, 12345), '"12:32:00.12345"'),
-     (datetime.time(12, 32, 0, 123456), '"12:32:00.123456"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45), '"2017-04-01 12:23:45"'),
-     (datetime.datetime(2017, 4, 1, 4, 1, 2), '"2017-04-01 04:01:02"'),
-     (datetime.datetime(2017, 11, 12, 13, 14, 15), '"2017-11-12 13:14:15"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(0)), '"2017-04-01T12:23:45Z"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(3600)), '"2017-04-01T12:23:45+01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 1, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.1-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 12, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.12-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 123, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.123-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 1234, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.1234-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 12345, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.12345-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 123456, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.123456-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 23000, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.23-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.3-01:00"'),
-     (datetime.datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.3-01:30"')])
+    [(date(2011, 4, 30), '"2011-04-30"'), (date(1987, 12, 1), '"1987-12-01"'), (time(12, 32), '"12:32"'),
+     (time(12, 32, 23), '"12:32:23"'), (time(12, 32, 23, 345), '"12:32:23.345"'), (time(12, 32, 0, 1), '"12:32:00.1"'),
+     (time(12, 32, 0, 12), '"12:32:00.12"'), (time(12, 32, 0, 123), '"12:32:00.123"'),
+     (time(12, 32, 0, 1234), '"12:32:00.1234"'), (time(12, 32, 0, 12345), '"12:32:00.12345"'),
+     (time(12, 32, 0, 123456), '"12:32:00.123456"'), (datetime(2017, 4, 1, 12, 23, 45), '"2017-04-01 12:23:45"'),
+     (datetime(2017, 4, 1, 4, 1, 2), '"2017-04-01 04:01:02"'),
+     (datetime(2017, 11, 12, 13, 14, 15), '"2017-11-12 13:14:15"'),
+     (datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(0)), '"2017-04-01T12:23:45Z"'),
+     (datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(3600)), '"2017-04-01T12:23:45+01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 1, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.1-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 12, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.12-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 123, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.123-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 1234, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.1234-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 12345, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.12345-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 123456, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.123456-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 23000, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.23-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-3600)), '"2017-04-01T12:23:45.3-01:00"'),
+     (datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.3-01:30"')])
 def test_datetime_encode(value, expected, ensure_ascii):
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
 
 
-class WrongTZ(datetime.tzinfo):
+def test_datetime_subclass_encode():
+    assert yapic_json.dumps(MyDate(2020, 1, 1)) == '"2020-01-01"'
+    assert yapic_json.dumps(MyDateTime(2020, 1, 1, 12, 34, 56)) == '"2020-01-01 12:34:56"'
+    assert yapic_json.dumps(MyTime(12, 34, 56)) == '"12:34:56"'
+
+
+class WrongTZ(tzinfo):
     pass
 
 
 def test_datetime_encode_wtz(ensure_ascii):
-    with pytest.raises(Exception) as ex:
-        yapic_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ()))
+    with pytest.raises(Exception):
+        yapic_json.dumps(datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ()))
 
 
-class WrongTZ2(datetime.tzinfo):
+class WrongTZ2(tzinfo):
     def utcoffset(self, dt):
         return 0
 
 
 def test_datetime_encode_wtz2(ensure_ascii):
-    with pytest.raises(Exception) as ex:
-        yapic_json.dumps(datetime.datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ2()))
+    with pytest.raises(Exception):
+        yapic_json.dumps(datetime(2017, 12, 1, 1, 1, 1, tzinfo=WrongTZ2()))
 
 
 def __tz(sec):
-    return timezone(datetime.timedelta(0, sec))
+    return timezone(timedelta(0, sec))
 
 
 @pytest.mark.parametrize("value,expected", [
-    ('"12:34:25"', datetime.time(12, 34, 25)),
-    ('"01:01:01"', datetime.time(1, 1, 1)),
-    ('"01:01:01.123456"', datetime.time(1, 1, 1, 123456)),
-    ('"01:01:01Z"', datetime.time(1, 1, 1, 0, timezone.utc)),
-    ('"01:01:01.123456Z"', datetime.time(1, 1, 1, 123456, timezone.utc)),
-    ('"01:01:01+1000"', datetime.time(1, 1, 1, 0, __tz(10 * 3600))),
-    ('"01:01:01.123456+1000"', datetime.time(1, 1, 1, 123456, __tz(10 * 3600))),
-    ('"01:01:01+10:00"', datetime.time(1, 1, 1, 0, __tz(10 * 3600))),
-    ('"01:01:01+10:23"', datetime.time(1, 1, 1, 0, __tz(10 * 3600 + 23 * 60))),
-    ('"01:01:01-1000"', datetime.time(1, 1, 1, 0, __tz(-10 * 3600))),
-    ('"01:01:01.123456-1000"', datetime.time(1, 1, 1, 123456, __tz(-10 * 3600))),
-    ('"01:01:01-10:00"', datetime.time(1, 1, 1, 0, __tz(-10 * 3600))),
-    ('"01:01:01-10:23"', datetime.time(1, 1, 1, 0, __tz(-(10 * 3600 + 23 * 60)))),
-    ('"1900-01-01"', datetime.date(1900, 1, 1)),
-    ('"2017-05-13"', datetime.date(2017, 5, 13)),
-    ('"2017-05-13 20:24:23"', datetime.datetime(2017, 5, 13, 20, 24, 23)),
-    ('"2017-05-13T20:24:23"', datetime.datetime(2017, 5, 13, 20, 24, 23)),
-    ('"2017-05-13t20:24:23"', datetime.datetime(2017, 5, 13, 20, 24, 23)),
-    ('"2017-05-13 20:24:23Z"', datetime.datetime(2017, 5, 13, 20, 24, 23, tzinfo=timezone.utc)),
-    ('"2017-05-13 20:24:23z"', datetime.datetime(2017, 5, 13, 20, 24, 23, tzinfo=timezone.utc)),
-    ('"2017-05-13 20:24:23.123Z"', datetime.datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=timezone.utc)),
-    ('"2017-05-13 20:24:23.123+0100"', datetime.datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(3600))),
-    ('"2017-05-13 20:24:23.123+01:00"', datetime.datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(3600))),
-    ('"2017-05-13 20:24:23.123-0100"', datetime.datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(-3600))),
-    ('"2017-05-13 20:24:23.123-01:00"', datetime.datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(-3600))),
+    ('"12:34:25"', time(12, 34, 25)),
+    ('"01:01:01"', time(1, 1, 1)),
+    ('"01:01:01.123456"', time(1, 1, 1, 123456)),
+    ('"01:01:01Z"', time(1, 1, 1, 0, timezone.utc)),
+    ('"01:01:01.123456Z"', time(1, 1, 1, 123456, timezone.utc)),
+    ('"01:01:01+1000"', time(1, 1, 1, 0, __tz(10 * 3600))),
+    ('"01:01:01.123456+1000"', time(1, 1, 1, 123456, __tz(10 * 3600))),
+    ('"01:01:01+10:00"', time(1, 1, 1, 0, __tz(10 * 3600))),
+    ('"01:01:01+10:23"', time(1, 1, 1, 0, __tz(10 * 3600 + 23 * 60))),
+    ('"01:01:01-1000"', time(1, 1, 1, 0, __tz(-10 * 3600))),
+    ('"01:01:01.123456-1000"', time(1, 1, 1, 123456, __tz(-10 * 3600))),
+    ('"01:01:01-10:00"', time(1, 1, 1, 0, __tz(-10 * 3600))),
+    ('"01:01:01-10:23"', time(1, 1, 1, 0, __tz(-(10 * 3600 + 23 * 60)))),
+    ('"1900-01-01"', date(1900, 1, 1)),
+    ('"2017-05-13"', date(2017, 5, 13)),
+    ('"2017-05-13 20:24:23"', datetime(2017, 5, 13, 20, 24, 23)),
+    ('"2017-05-13T20:24:23"', datetime(2017, 5, 13, 20, 24, 23)),
+    ('"2017-05-13t20:24:23"', datetime(2017, 5, 13, 20, 24, 23)),
+    ('"2017-05-13 20:24:23Z"', datetime(2017, 5, 13, 20, 24, 23, tzinfo=timezone.utc)),
+    ('"2017-05-13 20:24:23z"', datetime(2017, 5, 13, 20, 24, 23, tzinfo=timezone.utc)),
+    ('"2017-05-13 20:24:23.123Z"', datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=timezone.utc)),
+    ('"2017-05-13 20:24:23.123+0100"', datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(3600))),
+    ('"2017-05-13 20:24:23.123+01:00"', datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(3600))),
+    ('"2017-05-13 20:24:23.123-0100"', datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(-3600))),
+    ('"2017-05-13 20:24:23.123-01:00"', datetime(2017, 5, 13, 20, 24, 23, 123, tzinfo=__tz(-3600))),
 ])
 def test_datetime_decode(value, expected):
     assert yapic_json.loads(value, parse_date=True) == expected
