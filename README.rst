@@ -24,7 +24,7 @@ Encoding and decoding output fully compatible with ``python.json`` package.
 Features
 --------
 
-*  Extreamly fast *(see benchmark results in '/test/benchmark' directory)*
+*  Extreamly fast *(see benchmark results in '/benchmark' directory)*
 *  Fully compatible output with Python json package
 *  Builtin object serialization method ``__json__`` *(see below)*
 *  Strict `JSON (RFC 4627) <http://www.ietf.org/rfc/rfc4627.txt?number=4627>`_ expected: ``Infinity``, ``NaN`` (*JavaScript* compatible infinity and not a number symbols)
