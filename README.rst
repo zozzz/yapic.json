@@ -30,7 +30,8 @@ Features
 *  Strict `JSON (RFC 4627) <http://www.ietf.org/rfc/rfc4627.txt?number=4627>`_ expected: ``Infinity``, ``NaN`` (*JavaScript* compatible infinity and not a number symbols)
 *  UTF-8 encoding & decoding support
 *  Accurate float encoding & decoding
-*  ``date`` / ``datetime`` / ``time`` encondig & decoding support
+*  ``date`` / ``datetime`` / ``time`` encondig & decoding support *(can encode subclasses)*
+*  ``uuid.UUID`` encoding support
 *  `ItemsView <https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView>`_ encoding support
 
    .. code-block:: python
