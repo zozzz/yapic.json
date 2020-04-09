@@ -32,5 +32,6 @@
 #define YapicJson_Err_NumberIsTooBig "Number is too big"
 #define YapicJson_Err_JunkTrailingData "Found junk data after valid JSON data"
 #define YapicJson_Err_ItemsViewTuple "ItemsView iterable must returns with (key, value) tuple, but returned with: %R"
+#define YapicJson_Err_UTF8Invalid "Invalid UTF-8 character"
 
 #endif /* E513ED4E_C133_C63C_14FB_4A86B0AAA2C7 */

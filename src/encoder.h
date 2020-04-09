@@ -403,11 +403,6 @@ class Encoder {
 			Encoder_AppendFast('0' + (value / 10)); \
 			Encoder_AppendFast('0' + (value % 10));
 
-		// #define EncodeDT_AppendInt3(value) \
-		// 	Encoder_AppendFast('0' + (value / 100)); \
-		// 	Encoder_AppendFast('0' + ((value / 10) % 10)); \
-		// 	Encoder_AppendFast('0' + (value % 10));
-
 		#define EncodeDT_MILIS_MAX_LENGTH 6
 		#define EncodeDT_AppendMilis(value, ms_size) \
 			{ \

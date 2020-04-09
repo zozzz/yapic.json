@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# yapf: disable
 import pytest
 
 import json as py_json
@@ -40,8 +41,20 @@ def test_decode_chars(unicode_chars, ensure_ascii):
         if ensure_ascii and chc >= 0xD800 and chc <= 0xDFFF:  # invalid unicode escape
             with pytest.raises(yapic_json.JsonDecodeError):
                 yapic_json.loads(json_ch)
+
+            with pytest.raises(yapic_json.JsonDecodeError):
+                yapic_json.loads(json_ch.encode("utf-8"))
         else:
             assert yapic_json.loads(json_ch) == py_json.loads(json_ch), json_ch
+
+            if chc >= 0xD800 and chc <= 0xDFFF:
+                bytes_ch = json_ch.encode("utf-8", errors="surrogatepass")
+                with pytest.raises(yapic_json.JsonDecodeError) as ex:
+                    yapic_json.loads(bytes_ch)
+                ex.match("Invalid UTF-8 character at position: 1.")
+            else:
+                bytes_ch = json_ch.encode("utf-8")
+                assert yapic_json.loads(bytes_ch) == py_json.loads(bytes_ch), bytes_ch
 
 
 @pytest.mark.parametrize(
@@ -70,6 +83,7 @@ def test_encode_string(value, ensure_ascii):
 @pytest.mark.parametrize(
     "value",
     [
+        "",
         "Hello World",
         "\r\n\t\b\f\\\"",
         "Árvíztűrő tükörfúrógép",
@@ -78,6 +92,7 @@ def test_encode_string(value, ensure_ascii):
         "Език за програмиране е изкуствен език, предназначен за изразяване на изчисления, които могат да се извършат от машина, по-специално от компютър. Езиците за програмиране могат да се използват за създаване на програми, които контролират поведението на машина, да  реализират алгоритми точно или във вид на човешка комуникация." * 200
     ],
     ids=[
+        "Empty string",
         "Hello World",
         "Escaped chars",
         "Árvíztűrő tükörfúrógép",
@@ -89,11 +104,23 @@ def test_decode_string(value, ensure_ascii):
     expected = value
     value = py_json.dumps(value, ensure_ascii=True)
     assert yapic_json.loads(value) == expected
+    bytes_value = value.encode("utf-8")
+    assert yapic_json.loads(bytes_value) == py_json.loads(bytes_value)
+
+
+def test_decode_invalid_input():
+    with pytest.raises(TypeError) as ex:
+        yapic_json.loads({})
+    ex.match("argument 1 must be str or bytes")
 
 
 def test_decode_unterminated():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('"Hello')
+    ex.match("Unexpected end of data at position: 6.")
+
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"Hello'.encode("utf-8"))
     ex.match("Unexpected end of data at position: 6.")
 
 
@@ -102,10 +129,18 @@ def test_decode_unterminated2():
         yapic_json.loads('"\\')
     ex.match("Unexpected end of data at position: 2.")
 
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\'.encode("utf-8"))
+    ex.match("Unexpected end of data at position: 2.")
+
 
 def test_decode_unterminated3():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('"\\u')
+    ex.match("Unexpected end of data at position: 3.")
+
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u'.encode("utf-8"))
     ex.match("Unexpected end of data at position: 3.")
 
 
@@ -114,10 +149,18 @@ def test_decode_unterminated4():
         yapic_json.loads('"\\u0')
     ex.match("Unexpected end of data at position: 4.")
 
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u0'.encode("utf-8"))
+    ex.match("Unexpected end of data at position: 4.")
+
 
 def test_decode_unterminated5():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('"\\u00')
+    ex.match("Unexpected end of data at position: 5.")
+
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u00'.encode("utf-8"))
     ex.match("Unexpected end of data at position: 5.")
 
 
@@ -126,10 +169,18 @@ def test_decode_unterminated6():
         yapic_json.loads('"\\u000')
     ex.match("Unexpected end of data at position: 6.")
 
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u000'.encode("utf-8"))
+    ex.match("Unexpected end of data at position: 6.")
+
 
 def test_decode_unterminated7():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('"\\u0000')
+    ex.match("Unexpected end of data at position: 7.")
+
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u0000'.encode("utf-8"))
     ex.match("Unexpected end of data at position: 7.")
 
 
@@ -138,8 +189,43 @@ def test_decode_unterminated8():
         yapic_json.loads('"\\u00000')
     ex.match("Unexpected end of data at position: 8.")
 
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\u00000'.encode("utf-8"))
+    ex.match("Unexpected end of data at position: 8.")
+
 
 def test_decode_invalid_escape():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('"\\g')
     ex.match("Invalid escaped character while decoding 'string' at position: 2.")
+
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('"\\g'.encode("utf-8"))
+    ex.match("Invalid escaped character while decoding 'string' at position: 2.")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        b"\x81",
+        b"\xC1",
+        b"\xE1",
+        b"\xE1\x81",
+        b"\xF1",
+        b"\xF1\x81",
+        b"\xF1\x81\x82",
+    ],
+    ids=[
+        "Invalid: start with continuation",
+        "Invalid: incomplete seq (1 / 2)",
+        "Invalid: incomplete seq (1 / 3)",
+        "Invalid: incomplete seq (2 / 3)",
+        "Invalid: incomplete seq (1 / 4)",
+        "Invalid: incomplete seq (2 / 4)",
+        "Invalid: incomplete seq (3 / 4)",
+    ])
+def test_decode_invalid_utf8(value):
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads(b'"' + value + b'"')
+    ex.match("Invalid UTF-8 character")
+

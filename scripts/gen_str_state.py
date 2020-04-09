@@ -230,7 +230,7 @@ class EncoderGen(TableGen):
 
 SKIP_BYTES_WHEN_DECODE = frozenset([
     ord("\""),
-    ord("\0"),
+    # ord("\0"),
     ord("\\")
 ])
 
@@ -238,19 +238,19 @@ SKIP_BYTES_WHEN_DECODE = frozenset([
 class DecoderGen(TableGen):
     __filename__ = "str_decode_table.h"
 
-    STR_ASCII = (1, set(range(1, 0x80)) - SKIP_BYTES_WHEN_DECODE)
+    STR_ASCII = (1, set(range(0, 0x80)) - SKIP_BYTES_WHEN_DECODE)
 
     STR_UTF8_START_OCT_2 = (2, set(range(0xC0, 0xE0)))
     STR_UTF8_START_OCT_3 = (3, set(range(0xE0, 0xF0)))
     STR_UTF8_START_OCT_4 = (4, set(range(0xF0, 0xF5)))
-    STR_UTF8_PART = (9, set(range(0x80, 0xC0)))
 
     STR_QUOTE = (5, set([ord("\"")]))
     STR_ESC_START = (6, set([ord("\\")]))
 
-    STR_NULL = (7, set([0]))
+    # STR_NULL = (7, set([0]))
 
-    STR_UTF8_INVALID = (8, set(range(0xF5, 0xFF + 1)))
+    STR_UTF8_INVALID = (7, set(range(0xF5, 0xFF + 1)))
+    STR_UTF8_PART = (8, set(range(0x80, 0xC0)))
 
 
 """

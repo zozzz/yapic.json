@@ -19,13 +19,21 @@
 
 #include "decoder.h"
 
-#define __decode(T) { \
-	Decoder<T, Py_UCS4> decoder(\
-		(T*) PyUnicode_DATA(input), \
-		PyUnicode_GET_LENGTH(input)); \
+#define __decoder_options \
 	decoder.objectHook = objectHook; \
 	decoder.parseFloat = parseFloat; \
-	decoder.parseDate = parseDate; \
+	decoder.parseDate = parseDate;
+
+#define __decode_str(T) { \
+	StrDecoder<T, Py_UCS4> decoder((T*) PyUnicode_DATA(input), PyUnicode_GET_LENGTH(input)); \
+	__decoder_options \
+	return decoder.Decode(); \
+	}
+
+#define __decode_bytes(T) { \
+	BytesDecoder<T, Py_UCS4, 1> decoder((T*) PyBytes_AS_STRING(input), PyBytes_GET_SIZE(input)); \
+	if (!decoder.strBuffer.EnsureCapacity(PyBytes_GET_SIZE(input))) { return NULL; } \
+	__decoder_options \
 	return decoder.Decode(); \
 	}
 
@@ -106,7 +114,7 @@ namespace Yapic { namespace Json {
 		PyObject* parseFloat = NULL;
 		bool parseDate = true;
 
-		if (EXPECT_TRUE(PyArg_ParseTupleAndKeywords(args, kwargs, "U|OOb", kwlist,
+		if (EXPECT_TRUE(PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOb", kwlist,
 			&input, &objectHook, &parseFloat, &parseDate))) {
 
 			if (objectHook != NULL && !PyCallable_Check(objectHook)) {
@@ -117,22 +125,28 @@ namespace Yapic { namespace Json {
 				PyErr_SetString(PyExc_TypeError, "argument 'parse_float' must be callable");
 			}
 
-			switch (PyUnicode_KIND(input)) {
-				case PyUnicode_1BYTE_KIND:
-					__decode(Py_UCS1);
-				break;
+			if (PyUnicode_Check(input)) {
+				switch (PyUnicode_KIND(input)) {
+					case PyUnicode_1BYTE_KIND:
+						__decode_str(Py_UCS1);
+					break;
 
-				case PyUnicode_2BYTE_KIND:
-					__decode(Py_UCS2);
-				break;
+					case PyUnicode_2BYTE_KIND:
+						__decode_str(Py_UCS2);
+					break;
 
-				case PyUnicode_4BYTE_KIND:
-					__decode(Py_UCS4);
-				break;
+					case PyUnicode_4BYTE_KIND:
+						__decode_str(Py_UCS4);
+					break;
 
-				default:
-					assert(0);
-				break;
+					default:
+						assert(0);
+					break;
+				}
+			} else if (PyBytes_Check(input)) {
+				__decode_bytes(Py_UCS1);
+			} else {
+				PyErr_SetString(PyExc_TypeError, "argument 1 must be str or bytes");
 			}
 		}
 

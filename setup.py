@@ -35,6 +35,7 @@ else:
     if DEVELOP:
         define_macros["_DEBUG"] = 1
         undef_macros.append("NDEBUG")
+        extra_compile_args.append("-g3")
     else:
         extra_compile_args.append("-O3")
 
@@ -81,7 +82,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         super().initialize_options()
-        self.pytest_args = "-x -s -v"
+        self.pytest_args = "-x -s -vv"
         self.file = None
 
     def finalize_options(self):

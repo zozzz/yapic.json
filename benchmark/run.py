@@ -22,7 +22,6 @@ from datetime import datetime, tzinfo, timedelta
 
 class LatencyList(Benchmark):
     """ Latency: list """
-
     def get_encode_data(self):
         return list()
 
@@ -38,7 +37,6 @@ class LatencySet(Benchmark):
 
 class LatencyDict(Benchmark):
     """ Latency: dict """
-
     def get_encode_data(self):
         return dict()
 
@@ -81,49 +79,42 @@ class LatencyUnicodeToAscii(Benchmark):
 
 class LatencyTrue(Benchmark):
     """ Latency: True """
-
     def get_encode_data(self):
         return True
 
 
 class LatencyFalse(Benchmark):
     """ Latency: False """
-
     def get_encode_data(self):
         return False
 
 
 class LatencyNone(Benchmark):
     """ Latency: None """
-
     def get_encode_data(self):
         return None
 
 
 class LatencyLongMin(Benchmark):
     """ Latency: Long min """
-
     def get_encode_data(self):
         return 0
 
 
 class LatencyLongMax(Benchmark):
     """ Latency: Long max """
-
     def get_encode_data(self):
         return 9223372036854775807
 
 
 class LatencyFloat(Benchmark):
     """ Latency: Float to ascii """
-
     def get_encode_data(self):
         return 1.1
 
 
 class LatencyFloatBig(Benchmark):
     """ Latency: Big float to ascii """
-
     def get_encode_data(self):
         return math.pi
 
@@ -182,21 +173,19 @@ class LatencyDateTime(Benchmark):
 
 
 class StringC1000AsciiToAscii(Benchmark):
-    """ 1000 ASCII char """
-
+    """ String: 1000 ASCII char """
     def get_encode_data(self):
         return "ABCDE" * 200
 
 
 class StringC200ExtendedAsciiToAscii(Benchmark):
-    """ 1000 Extended ASCII char -> ASCII """
-
+    """  String:1000 Extended ASCII char -> ASCII """
     def get_encode_data(self):
         return "ÁáÉéÍ" * 200
 
 
 class StringC1000AsciiToUnicode(Benchmark):
-    """ 1000 ASCII char -> UNICODE """
+    """ String: 1000 ASCII char -> UNICODE """
 
     ENSURE_ASCII = False
 
@@ -205,16 +194,16 @@ class StringC1000AsciiToUnicode(Benchmark):
 
 
 class StringC200ExtendedAsciiToUnicode(Benchmark):
-    """ 200 Extended ASCII char -> UNICODE """
+    """ String: 200 Extended ASCII char -> UNICODE """
 
     ENSURE_ASCII = False
 
     def get_encode_data(self):
-        return "Á" * 200
+        return "ÁŐ" * 100
 
 
 class String2BUnicodeTextToAscii(Benchmark):
-    """ 2B Unicode text -> Ascii """
+    """ String: 2B Unicode text -> Ascii """
 
     ITERATIONS = 100
 
@@ -223,13 +212,13 @@ class String2BUnicodeTextToAscii(Benchmark):
 
 
 class String2BUnicodeTextToUnicode(String2BUnicodeTextToAscii):
-    """ 2 byte Unicode text -> Unicode """
+    """ String: 2 byte Unicode text -> Unicode """
 
     ENSURE_ASCII = False
 
 
 class String4BUnicodeTextToAscii(Benchmark):
-    """ 4B Unicode text -> Ascii """
+    """ String: 4B Unicode text -> Ascii """
 
     ITERATIONS = 100
 
@@ -238,20 +227,73 @@ class String4BUnicodeTextToAscii(Benchmark):
 
 
 class String4BUnicodeTextToUnicode(String4BUnicodeTextToAscii):
-    """ 4B Unicode text -> Unicode """
+    """ String: 4B Unicode text -> Unicode """
 
     ITERATIONS = 100
     ENSURE_ASCII = False
 
 
 class StringMixedUnicodeTextToAscii(Benchmark):
-    """ Mixed Unicode text -> Ascii """
+    """ String: Mixed Unicode text -> Ascii """
 
     ITERATIONS = 100
 
     def get_encode_data(self):
         return ("𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" + "ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY Z" + "Език за програмиране е изк" +
                 "Áí óéÉ\náÍÓ") * 200
+
+
+class BytesC1000AsciiToAscii(Benchmark):
+    """ Bytes: 1000 ASCII char """
+    ENCODER = None
+    def get_decode_data(self):
+        return b'"' + ("ABCDE" * 200).encode("utf-8") + b'"'
+
+
+class BytesC200ExtendedAsciiToAscii(Benchmark):
+    """ Bytes: 1000 Extended ASCII char """
+    ENCODER = None
+    def get_decode_data(self):
+        return b'"' + ("ÁáÉéÍ" * 200).encode("utf-8") + b'"'
+
+
+class BytesC1000AsciiToUnicode(Benchmark):
+    """ Bytes: 1000 ASCII char """
+    ENCODER = None
+    def get_decode_data(self):
+        return b'"' + ("ABCDE" * 200).encode("utf-8") + b'"'
+
+
+class BytesC200ExtendedAsciiToUnicode(Benchmark):
+    """ Bytes: 200 Extended ASCII char """
+    ENCODER = None
+    def get_decode_data(self):
+        return b'"' + ("ÁŐ" * 100).encode("utf-8") + b'"'
+
+
+class Bytes2BUnicodeTextToAscii(Benchmark):
+    """ Bytes: 2B Unicode text """
+    ENCODER = None
+    ITERATIONS = 100
+    def get_decode_data(self):
+        return b'"' + ("Език за програмиране е изкуствен език, предназначен за изразяване на изчисления, които могат да се извършат от машина, по-специално от компютър. Езиците за програмиране могат да се използват за създаване на програми, които контролират поведението на машина, да  реализират алгоритми точно или във вид на човешка комуникация." * 200).encode("utf-8") + b'"'
+
+
+class Bytes4BUnicodeTextToAscii(Benchmark):
+    """ Bytes: 4B Unicode text """
+    ENCODER = None
+    ITERATIONS = 100
+    def get_decode_data(self):
+        return b'"' + ("𐌀𐌂𐌃𐌄𐌅𐌆𐌇𐌈𐌉𐌋𐌌𐌍𐌐𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" * 400).encode("utf-8") + b'"'
+
+
+class BytesMixedUnicodeTextToAscii(Benchmark):
+    """ Bytes: Mixed Unicode text """
+    ENCODER = None
+    ITERATIONS = 100
+    def get_decode_data(self):
+        bytes = ((r"𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ") * 200).encode("utf-8")
+        return b'"' + bytes + b'"'
 
 
 class ListOfInts(Benchmark):
@@ -405,6 +447,76 @@ class ListOfStringsMixed(Benchmark):
         return res
 
 
+class ListOfStringsUnicodeEscape(Benchmark):
+    """ List of unicode escapes """
+    ENCODER = None
+    ITERATIONS = 100
+    ENSURE_ASCII = False
+
+    def get_encode_data(self):
+        res = []
+        for x in range(256):
+            res.append(
+                py_json.dumps(
+                    "𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ",
+                    ensure_ascii=True))
+        return res
+
+
+class ListOfBytesAscii(Benchmark):
+    """ List of ascii bytes"""
+
+    ENCODER = None
+    ITERATIONS = 100
+
+    def get_decode_data(self):
+        res = []
+        for x in range(256):
+            res.append(b'"' + ("ABCDE" * 40).encode("utf-8") + b'"')
+        return b"[" + b",".join(res) + b"]"
+
+
+class ListOfBytes2BUnicodeToAscii(Benchmark):
+    """ List of 2 byte unicode bytes"""
+
+    ENCODER = None
+    ITERATIONS = 100
+
+    def get_decode_data(self):
+        res = []
+        for x in range(256):
+            res.append(b'"' + ("Език за програмиране е изкуствен език, предназначен" * 2).encode("utf-8") + b'"')
+        return b"[" + b",".join(res) + b"]"
+
+
+class ListOfBytes4BUnicodeToUnicode(Benchmark):
+    """ List of 4 byte unicode bytes"""
+
+    ENCODER = None
+    ITERATIONS = 100
+
+    def get_decode_data(self):
+        res = []
+        for x in range(256):
+            res.append(b'"' + ("𐌀𐌂𐌃𐌄𐌅𐌆𐌇𐌈𐌉𐌋𐌌𐌍𐌐𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" * 10).encode("utf-8") + b'"')
+        return b"[" + b",".join(res) + b"]"
+
+
+class ListOfBytesMixed(Benchmark):
+    """ List of mixed bytes"""
+
+    ENCODER = None
+    ITERATIONS = 100
+
+    def get_decode_data(self):
+        res = []
+        for x in range(256):
+            data = r"𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ".encode(
+                "utf-8")
+            res.append(b'"' + data + b'"')
+        return b"[" + b",".join(res) + b"]"
+
+
 class TupleOfInts(Benchmark):
     """ Tuple of int values """
 
@@ -429,7 +541,6 @@ class SetOfInts(Benchmark):
 
 class MinMaxInt(Benchmark):
     """ Min & Max Int """
-
     def get_encode_data(self):
         return (-9223372036854775808, 9223372036854775807)
 
@@ -454,6 +565,17 @@ class LargeDataToAscii(Benchmark):
     def get_encode_data(self):
         with codecs.open(path.join(path.dirname(__file__), "large-data.json"), "r", "utf-8") as f:
             return py_json.load(f)
+
+
+class LargeDataBytes(Benchmark):
+    """ Large data bytes """
+
+    ENCODER = None
+    ITERATIONS = 10
+
+    def get_decode_data(self):
+        with open(path.join(path.dirname(__file__), "large-data.json"), "rb") as f:
+            return f.read()
 
 
 class LargeDataToUnicode(LargeDataToAscii):
@@ -513,7 +635,7 @@ class MypyDataToAscii(Benchmark):
     """ Mypy data -> Ascii """
 
     ENSURE_ASCII = True
-    ITERATIONS = 100
+    ITERATIONS = 10
 
     def get_encode_data(self):
         with codecs.open(path.join(path.dirname(__file__), "builtins.data.json"), "r", "utf-8") as f:
@@ -537,7 +659,6 @@ class ListViewBase(Benchmark):
 
 class ListViewDictItems(ListViewBase):
     """ ListView dict.items() """
-
     class dict_items:
         def __init__(self, data):
             self.data = data
@@ -551,7 +672,6 @@ class ListViewDictItems(ListViewBase):
 
 class ListViewIterator(ListViewBase):
     """ ListView iterator """
-
     class lv_factory:
         def __init__(self, data):
             self.data = data
@@ -565,7 +685,6 @@ class ListViewIterator(ListViewBase):
 
 class ListViewDictCopy(ListViewBase):
     """ ListView similar with dict creation from iterable """
-
     class dict_factory:
         def __init__(self, data):
             self.data = data

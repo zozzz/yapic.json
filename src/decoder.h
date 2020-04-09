@@ -15,8 +15,7 @@
 	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", cursor - inputStart)
 
 #define Decoder_ErrorFormat(msg, ...) \
-	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", __VA_ARGS__, cursor - inputStart); \
-	return NULL
+	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", __VA_ARGS__, cursor - inputStart)
 
 #define Decoder_FN(name) \
 	inline PyObject* name(CHIN* cursor, CHIN** cursorOut)
@@ -58,8 +57,239 @@
 namespace Yapic { namespace Json {
 using namespace double_conversion;
 
+#include "str_decode_table.h"
 
-template<typename CHIN, typename CHOUT>
+#define ReadUnicodeEscapePart(output) \
+	++cursor; \
+	if (*cursor >= '0' && *cursor <= '9')  { \
+		output = (output << 4) + (*cursor - '0'); \
+	} else if (*cursor >= 'a' && *cursor <= 'f') { \
+		output = (output << 4) + (*cursor - 'a' + 10); \
+	} else if (*cursor >= 'A' && *cursor <= 'F') { \
+		output = (output << 4) + (*cursor - 'A' + 10); \
+	} else { \
+		if (*cursor == '\0') { Decoder_Error(YapicJson_Err_UnexpectedEnd); } \
+		else { Decoder_Error(YapicJson_Err_UnexpectedCharInUnicodeEscape); } \
+		return false; \
+	}
+
+#define ReadUnicodeEscape(output) \
+		ReadUnicodeEscapePart(output); \
+		ReadUnicodeEscapePart(output); \
+		ReadUnicodeEscapePart(output); \
+		ReadUnicodeEscapePart(output);
+
+#define BR_IS_UTF8_ASCII(ch) ((ch) < 0x80)
+#define BR_IS_UTF8_LENGTH_2(ch) ((ch) < 0xE0)
+#define BR_IS_UTF8_LENGTH_3(ch) ((ch) < 0xF0)
+#define BR_IS_UTF8_LENGTH_4(ch) ((ch) < 0xF5)
+#define BR_IS_UTF8_CONT(ch) ((ch) >= 0x80 && (ch) < 0xC0)
+
+
+template<typename CHIN, typename CHOUT, typename BUFF>
+class StringReader {
+	public:
+		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
+			buffer.Reset();
+			register CHOUT maxchar = 127;
+			CHOUT escaped;
+
+			while (cursor < inputEnd) {
+				if (*cursor == '"') {
+					goto success;
+				} else if (*cursor == '\\') {
+					if (ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped)) {
+						maxchar |= escaped;
+						++cursor;
+					} else {
+						return NULL;
+					}
+				} else {
+					CHIN* sliceBegin = cursor;
+
+					do {
+						maxchar |= *cursor;
+					} while (++cursor < inputEnd && *cursor != '\\' && *cursor != '"');
+
+					if (!buffer.AppendSlice(sliceBegin, cursor - sliceBegin)) {
+						return NULL;
+					}
+				}
+			}
+
+			Decoder_Error(YapicJson_Err_UnexpectedEnd);
+			return NULL;
+
+			success:
+				*cursorOut = ++cursor;
+				return buffer.NewString(maxchar);
+		}
+
+		static inline bool ReadEscapeSeq(CHIN *&cursor, const CHIN * const inputStart, const CHIN * const inputEnd, CHOUT &result) {
+			switch (*(++cursor)) {
+				case 'b': result = '\b'; break;
+				case 'f': result = '\f'; break;
+				case 'n': result = '\n'; break;
+				case 'r': result = '\r'; break;
+				case 't': result = '\t'; break;
+				case '"': result = '"'; break;
+				case '\\': result = '\\'; break;
+				case '/': result = '/'; break;
+				case 'u': {
+					result = 0;
+					ReadUnicodeEscape(result);
+
+					if ((result & 0xFC00) == 0xD800) {
+						if (*(++cursor) == '\\' && *(++cursor) == 'u' ) {
+							CHOUT ucs_pt2 = 0;
+							ReadUnicodeEscape(ucs_pt2);
+							if ((ucs_pt2 & 0xFC00) == 0xDC00) {
+								result = 0x10000 + (((result - 0xD800) << 10) | (ucs_pt2 - 0xDC00));
+							} else {
+								Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
+								return false;
+							}
+						} else {
+							Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
+							return false;
+						}
+					} else if ((result & 0xFC00) == 0xDC00) {
+						Decoder_Error(YapicJson_Err_UnpairedLowSurrogate);
+						return false;
+					}
+				} break;
+
+				default:
+					if (*cursor == '\0') {
+						Decoder_Error(YapicJson_Err_UnexpectedEnd);
+						return false;
+					} else {
+						Decoder_Error(YapicJson_Err_InvalidEscape);
+						return false;
+					}
+				break;
+			}
+
+			return true;
+		}
+};
+
+
+
+template<typename CHIN, typename CHOUT, typename BUFF>
+class BytesReader {
+	public:
+		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
+			buffer.Reset();
+			register CHOUT maxchar = 127;
+			register CHOUT tmp = 0;
+
+			while (cursor < inputEnd) {
+				if(BR_IS_UTF8_ASCII(*cursor)) {
+					if (*cursor == '"') {
+						goto success;
+					} else if (*cursor == '\\') {
+						if (StringReader<CHIN, CHOUT, BUFF>::ReadEscapeSeq(cursor, inputStart, inputEnd, tmp) && buffer.AppendChar(tmp)) {
+							maxchar |= tmp;
+							cursor += 1;
+						} else {
+							return NULL;
+						}
+					} else if (maxchar == 127) {
+						CHIN* begin = cursor;
+						PyObject* result;
+						if (FastAscii(begin, cursor, inputEnd, result)) {
+							*cursorOut = ++cursor;
+							return result;
+						} else if (cursor >= inputEnd) {
+							goto error;
+						} else {
+							buffer.AppendSlice(begin, cursor - begin);
+						}
+					} else {
+						do {
+							*(buffer.cursor++) = *cursor;
+						} while (++cursor < inputEnd && str_state_table[*cursor] == STR_ASCII);
+					}
+				} else if (ReadChar(cursor, inputEnd, tmp)) {
+					*(buffer.cursor++) = tmp;
+					maxchar |= tmp;
+				} else {
+					return Decoder_Error(YapicJson_Err_UTF8Invalid);
+				}
+			}
+
+			error:
+				Decoder_Error(YapicJson_Err_UnexpectedEnd);
+				return NULL;
+
+			success:
+				*cursorOut = ++cursor;
+				return buffer.NewString(maxchar);
+		}
+
+		static inline bool ReadChar(CHIN *&cursor, const CHIN * const inputEnd, CHOUT &result) {
+			if (*cursor < 0xC0) {
+				return false;
+			} else if (BR_IS_UTF8_LENGTH_2(*cursor)
+						&& BR_IS_UTF8_CONT(*(cursor + 1))) {
+				result = ((*cursor & UTF8_OCT2_MASK) << 6)
+					| (*(cursor + 1) & UTF8_OCT_PART_MASK);
+
+				cursor += 2;
+			} else if (BR_IS_UTF8_LENGTH_3(*cursor)
+						&& BR_IS_UTF8_CONT(*(cursor + 1))
+						&& BR_IS_UTF8_CONT(*(cursor + 2))) {
+				result = ((*cursor & UTF8_OCT3_MASK) << 12)
+					| ((*(cursor + 1) & UTF8_OCT_PART_MASK) << 6)
+					| (*(cursor + 2) & UTF8_OCT_PART_MASK);
+
+				if (Py_UNICODE_IS_SURROGATE(result)) {
+					return false;
+				}
+
+				cursor += 3;
+			} else if (BR_IS_UTF8_LENGTH_4(*cursor)
+						&& BR_IS_UTF8_CONT(*(cursor + 1))
+						&& BR_IS_UTF8_CONT(*(cursor + 2))
+						&& BR_IS_UTF8_CONT(*(cursor + 3))) {
+				result = ((*cursor & UTF8_OCT4_MASK) << 18)
+					| ((*(cursor + 1) & UTF8_OCT_PART_MASK) << 12)
+					| ((*(cursor + 2) & UTF8_OCT_PART_MASK) << 6)
+					| (*(cursor + 3) & UTF8_OCT_PART_MASK);
+
+				if (result > 0x10FFFF) {
+					return false;
+				}
+
+				cursor += 4;
+			} else {
+				return false;
+			}
+
+			return true;
+		}
+
+		static bool FastAscii(CHIN *& begin, CHIN *&cursor, const CHIN * const inputEnd, PyObject *&result) {
+			while (++cursor < inputEnd && str_state_table[*cursor] == STR_ASCII);
+
+			if (*cursor == '"') {
+				Py_ssize_t size = cursor - begin;
+				if ((result = PyUnicode_New(size, 127))) {
+					CopyBytes(PyUnicode_1BYTE_DATA(result), begin, size);
+				} else {
+					PyErr_Clear();
+					return false;
+				}
+				return true;
+			}
+
+			return false;
+		}
+};
+
+
+template<typename CHIN, typename CHOUT, typename BUFFER, typename READER>
 class Decoder {
 	public:
 		CHIN* inputStart;
@@ -68,6 +298,7 @@ class Decoder {
 		PyObject* objectHook;
 		PyObject* parseFloat;
 		bool parseDate;
+		BUFFER strBuffer;
 
 		inline Decoder(CHIN* data, size_t length)
 			: inputStart(data), inputEnd(data + length) {
@@ -119,29 +350,7 @@ class Decoder {
 		}
 
 	private:
-		ChunkBuffer buffer;
 		char floatBuffer[YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS + 10];
-
-		#define ReadUnicodeEscapePart(output) \
-			++cursor; \
-			if (*cursor >= '0' && *cursor <= '9')  { \
-				output = (output << 4) + (*cursor - '0'); \
-			} else if (*cursor >= 'a' && *cursor <= 'f') { \
-				output = (output << 4) + (*cursor - 'a' + 10); \
-			} else if (*cursor >= 'A' && *cursor <= 'F') { \
-				output = (output << 4) + (*cursor - 'A' + 10); \
-			} else { \
-				if (*cursor == '\0') { Decoder_Error(YapicJson_Err_UnexpectedEnd); } \
-				else { Decoder_Error(YapicJson_Err_UnexpectedCharInUnicodeEscape); } \
-				return NULL; \
-			}
-
-		#define ReadUnicodeEscape(output) \
-				ReadUnicodeEscapePart(output); \
-				ReadUnicodeEscapePart(output); \
-				ReadUnicodeEscapePart(output); \
-				ReadUnicodeEscapePart(output);
-
 
 		Decoder_FN(ReadString) {
 			if (parseDate) {
@@ -151,83 +360,7 @@ class Decoder {
 				}
 			}
 
-			buffer.Reset();
-			register CHOUT maxchar = 127;
-
-			while (cursor < inputEnd) {
-				// printf("C = %ld cursor = %ld end = %ld L = %ld\n", *cursor, cursor, inputEnd, inputEnd - cursor);
-
-				if (*cursor == '"') {
-					goto success;
-				} else if (*cursor == '\\') {
-					CHOUT ucs_pt1 = 0;
-					switch (*(++cursor)) {
-						case 'b': ucs_pt1 = '\b'; break;
-						case 'f': ucs_pt1 = '\f'; break;
-						case 'n': ucs_pt1 = '\n'; break;
-						case 'r': ucs_pt1 = '\r'; break;
-						case 't': ucs_pt1 = '\t'; break;
-						case '"': ucs_pt1 = '"'; break;
-						case '\\': ucs_pt1 = '\\'; break;
-						case '/': ucs_pt1 = '/'; break;
-						case 'u': {
-							ReadUnicodeEscape(ucs_pt1);
-
-							if ((ucs_pt1 & 0xFC00) == 0xD800) {
-								if (*(++cursor) == '\\' && *(++cursor) == 'u' ) {
-									CHOUT ucs_pt2 = 0;
-									ReadUnicodeEscape(ucs_pt2);
-									if ((ucs_pt2 & 0xFC00) == 0xDC00) {
-										ucs_pt1 = 0x10000 + (((ucs_pt1 - 0xD800) << 10) | (ucs_pt2 - 0xDC00));
-									} else {
-										Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
-										return NULL;
-									}
-								} else {
-									Decoder_Error(YapicJson_Err_UnpairedHighSurrogate);
-									return NULL;
-								}
-							} else if ((ucs_pt1 & 0xFC00) == 0xDC00) {
-								Decoder_Error(YapicJson_Err_UnpairedLowSurrogate);
-								return NULL;
-							}
-
-							maxchar |= ucs_pt1;
-						} break;
-
-						default:
-							if (*cursor == '\0') {
-								Decoder_Error(YapicJson_Err_UnexpectedEnd);
-							} else {
-								Decoder_Error(YapicJson_Err_InvalidEscape);
-							}
-							return NULL;
-						break;
-					}
-
-					if (buffer.AppendChar(ucs_pt1)) {
-						++cursor;
-					} else {
-						return NULL;
-					}
-				} else {
-					buffer.StartSlice(cursor);
-					do {
-						maxchar |= *cursor;
-					} while (++cursor < inputEnd && *cursor != '\\' && *cursor != '"');
-
-					if (!buffer.CloseSlice(cursor)) {
-						return NULL;
-					}
-				}
-			}
-
-			Decoder_Error(YapicJson_Err_UnexpectedEnd);
-			return NULL;
-
-		success:
-			*cursorOut = ++cursor;
-			return buffer.NewString(maxchar);
+			return READER::Read(cursor, cursorOut, inputStart, inputEnd, strBuffer);
 		}
 
 		#define Decoder_IsNumber(ch) \
@@ -578,7 +711,7 @@ class Decoder {
 				if (cursor >= inputEnd) {
 					Decoder_Error(YapicJson_Err_UnexpectedEnd);
 				} else {
-					Decoder_ErrorFormat(YapicJson_Err_UnexpectedChar, *cursor);
+					return Decoder_ErrorFormat(YapicJson_Err_UnexpectedChar, *cursor);
 				}
 				return NULL;
 			}
@@ -835,6 +968,14 @@ class Decoder {
 			return NULL;
 		}
 };
+
+
+template<typename CHIN, typename CHOUT>
+using StrDecoder = Decoder<CHIN, CHOUT, ChunkBuffer, StringReader<CHIN, CHOUT, ChunkBuffer>>;
+
+template<typename CHIN, typename CHOUT, Py_ssize_t BSIZE>
+using BytesDecoder = Decoder<CHIN, CHOUT, MemoryBuffer<CHOUT, BSIZE>, BytesReader<CHIN, CHOUT, MemoryBuffer<CHOUT, BSIZE>>>;
+
 
 } /* end namespace Json */
 } /* end namespace Yapic */

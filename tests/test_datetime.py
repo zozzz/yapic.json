@@ -107,6 +107,8 @@ def __tz(sec):
 ])
 def test_datetime_decode(value, expected):
     assert yapic_json.loads(value, parse_date=True) == expected
+    bytes_value = value.encode("utf-8")
+    assert yapic_json.loads(bytes_value, parse_date=True) == expected
 
 
 @pytest.mark.parametrize("value", [
@@ -117,6 +119,9 @@ def test_datetime_decode(value, expected):
 ])
 def test_datetime_decode_as_string(value):
     assert yapic_json.loads(value, parse_date=True) == py_json.loads(value)
+
+    bytes_value = value.encode("utf-8")
+    assert yapic_json.loads(bytes_value, parse_date=True) == py_json.loads(bytes_value)
 
 
 @pytest.mark.parametrize("value", [

@@ -17,6 +17,7 @@ def default(o):
     return o.value
 
 
+# yapf: disable
 large_dict = {
     "first_name": "Vetési",
     "last_name": "Zoltán",
@@ -47,7 +48,7 @@ large_dict = {
     ({100: 100}, '{"100":100}'),
     ({3.14: 3.14}, '{"3.14":3.14}'),
     ({UUID("f4aa36f7-254b-472d-9dc6-e030f244054a"): 1}, '{"f4aa36f7-254b-472d-9dc6-e030f244054a":1}'),
-    (large_dict, py_json.dumps)
+    (large_dict, py_json.dumps),
 ])
 def test_dict_encode(value, expected, ensure_ascii):
     if expected is py_json.dumps:
@@ -55,12 +56,11 @@ def test_dict_encode(value, expected, ensure_ascii):
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
     assert yapic_json.dumps(value.items(), ensure_ascii=ensure_ascii) == expected
     assert yapic_json.dumps(ItemsView(value), ensure_ascii=ensure_ascii) == expected
+# yapf: enable
 
 
 def test_dict_recursive(ensure_ascii):
-    d = dict(
-        recursive=True
-    )
+    d = dict(recursive=True)
     d["self"] = d
 
     with pytest.raises(yapic_json.JsonEncodeError) as ex:
@@ -78,7 +78,6 @@ def test_dict_recursive(ensure_ascii):
     '{"false": false}',
     '{"null": null}',
     '{"array": [1]}',
-
     '{"true"  :  true}',
     '{   "true"  :  true}',
     '{   "true"  :true}',
@@ -88,7 +87,6 @@ def test_dict_recursive(ensure_ascii):
     '{   "true":true,"x":"y" }',
     '{"true":true    ,"x":"y"}',
     '{"true":true,     "x":"y"}',
-
     '{"Под водом проводе скоро половину свог живота":true}',
     py_json.dumps(large_dict, separators=(" , ", " : "), ensure_ascii=True, default=default),
     py_json.dumps(large_dict, separators=(",", ":"), ensure_ascii=False, default=default),
@@ -97,6 +95,8 @@ def test_dict_recursive(ensure_ascii):
 ])
 def test_dict_decode(value):
     assert yapic_json.loads(value) == py_json.loads(value)
+    bytes_value = value.encode("utf-8")
+    assert yapic_json.loads(bytes_value) == py_json.loads(bytes_value)
 
 
 def test_dict_decode_object_hook():

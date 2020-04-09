@@ -16,7 +16,29 @@ namespace Yapic { namespace Json {
 #define YapicJson_Buffer_4B_FROM 		YapicJson_Buffer_2B_MAXCHAR
 #define YapicJson_Buffer_4B_MAXCHAR 		0x10FFFF
 
+#define YapicJson_Buffer_Kind_FromChar(ch) \
+	((uint8_t)((ch) < YapicJson_Buffer_1B_MAXCHAR \
+		? PyUnicode_1BYTE_KIND \
+		: (ch) < YapicJson_Buffer_2B_MAXCHAR \
+			? PyUnicode_2BYTE_KIND \
+			: PyUnicode_4BYTE_KIND))
 
+#define YapicJson_Buffer_Kind_ToChar(kind) \
+	((kind) == PyUnicode_1BYTE_KIND  \
+		? YapicJson_Buffer_1B_MAXCHAR - 1 \
+		: (kind) == PyUnicode_2BYTE_KIND \
+			? YapicJson_Buffer_2B_MAXCHAR - 1 \
+			: YapicJson_Buffer_4B_MAXCHAR - 1)
+
+
+#define MemoryBuffer_HasEnoughCapacity(__buffer, __required) \
+	((__required) < (__buffer).end - (__buffer).cursor)
+
+#define MemoryBuffer_EnsureCapacity(__buffer, __required) \
+	(MemoryBuffer_HasEnoughCapacity(__buffer, __required) || (__buffer).EnsureCapacity(__required))
+
+
+// TODO: implement length == 0
 template<typename T, size_t length>
 class MemoryBuffer {
 	public:
@@ -76,6 +98,10 @@ class MemoryBuffer {
 		}
 
 		inline PyObject* NewString() {
+			return NewString(maxchar);
+		}
+
+		inline PyObject* NewString(T maxchar) {
 			Py_ssize_t l = cursor - start;
 			PyObject* str = PyUnicode_New(l, maxchar);
 			if (str != NULL) {
@@ -95,8 +121,29 @@ class MemoryBuffer {
 			}
 			return str;
 		}
-};
 
+		inline void Reset() {
+			cursor = start;
+			maxchar = 127;
+		}
+
+		inline bool AppendChar(T ch) {
+			assert(1 < end - cursor);
+			*(cursor++) = ch;
+			return true;
+		}
+
+		template<typename CT>
+		inline bool AppendSlice(CT *data, Py_ssize_t size) {
+			if (size < end - cursor || EnsureCapacity(size)) {
+				CopyBytes(cursor, data, size);
+				cursor += size;
+				return true;
+			} else {
+				return false;
+			}
+		}
+};
 
 
 template<typename T, size_t length>
@@ -216,6 +263,14 @@ class ChunkBuffer {
 		}
 
 		template<typename T>
+		inline bool AppendSlice(T* data, Py_ssize_t size) {
+			chunk->data = data;
+			chunk->kind = ChunkKindByType<T>::Kind;
+			totalLength += (chunk->length = size);
+			return GotoNextChunk();
+		}
+
+		template<typename T>
 		inline bool AppendChar(T ch) {
 			chunk->length = ch;
 			chunk->kind = Chunk_CHAR_KIND;
@@ -311,7 +366,6 @@ class ChunkBuffer {
 			return true;
 		}
 };
-
 
 
 } /* end namespace Json */

@@ -13,7 +13,8 @@ def ensure_ascii(request):
         lambda v: v,
         lambda v: '["ű",%s]' % v,
         lambda v: '["𐌌",%s]' % v,
+        lambda v: str(v).encode("utf-8"),
     ],
-    ids=["Ascii", "2 byte unicode", "4 byte unicode"])
+    ids=["Ascii", "2 byte unicode", "4 byte unicode", "Bytes"])
 def decoder_input_type(request):
     return request.param

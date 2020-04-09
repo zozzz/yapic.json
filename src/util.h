@@ -15,7 +15,7 @@ static inline void CopyBytes(O* dest, const I* input, S length) {
 	assert(sizeof(I) == 1 || sizeof(I) == 2 || sizeof(I) == 4);
 
 	if (sizeof(I) == sizeof(O)) {
-		memmove(dest, input, __bytelength(I, length));
+		memcpy(dest, input, __bytelength(I, length));
 	} else {
 		while (length-- > 0) {
 			dest[length] = input[length];

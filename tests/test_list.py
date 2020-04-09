@@ -38,6 +38,9 @@ def test_list_decode(expected, ensure_ascii):
     value = py_json.dumps(expected, separators=(",", ":"), ensure_ascii=ensure_ascii)
     assert yapic_json.loads(value) == expected
 
+    bytes_value = value.encode("utf-8")
+    assert yapic_json.loads(bytes_value) == expected
+
 
 def test_list_decode_invalid1():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
