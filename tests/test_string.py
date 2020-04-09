@@ -54,7 +54,7 @@ def test_decode_chars(unicode_chars, ensure_ascii):
                 ex.match("Invalid UTF-8 character at position: 1.")
             else:
                 bytes_ch = json_ch.encode("utf-8")
-                assert yapic_json.loads(bytes_ch) == py_json.loads(bytes_ch), bytes_ch
+                assert yapic_json.loads(bytes_ch) == py_json.loads(json_ch), bytes_ch
 
 
 @pytest.mark.parametrize(
@@ -105,7 +105,7 @@ def test_decode_string(value, ensure_ascii):
     value = py_json.dumps(value, ensure_ascii=True)
     assert yapic_json.loads(value) == expected
     bytes_value = value.encode("utf-8")
-    assert yapic_json.loads(bytes_value) == py_json.loads(bytes_value)
+    assert yapic_json.loads(bytes_value) == py_json.loads(value)
 
 
 def test_decode_invalid_input():

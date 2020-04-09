@@ -121,7 +121,7 @@ def test_datetime_decode_as_string(value):
     assert yapic_json.loads(value, parse_date=True) == py_json.loads(value)
 
     bytes_value = value.encode("utf-8")
-    assert yapic_json.loads(bytes_value, parse_date=True) == py_json.loads(bytes_value)
+    assert yapic_json.loads(bytes_value, parse_date=True) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("value", [

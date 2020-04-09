@@ -96,7 +96,7 @@ def test_dict_recursive(ensure_ascii):
 def test_dict_decode(value):
     assert yapic_json.loads(value) == py_json.loads(value)
     bytes_value = value.encode("utf-8")
-    assert yapic_json.loads(bytes_value) == py_json.loads(bytes_value)
+    assert yapic_json.loads(bytes_value) == py_json.loads(value)
 
 
 def test_dict_decode_object_hook():
