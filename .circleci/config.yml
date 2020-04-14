@@ -87,7 +87,7 @@ workflows:
       - prepare:
           exec: { name: x86, pyver: cp35-cp35m }
       - release:
-          exec: { name: x86, pyver: cp35-cp35m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -96,7 +96,7 @@ workflows:
       - prepare:
           exec: { name: x86, pyver: cp36-cp36m }
       - release:
-          exec: { name: x86, pyver: cp36-cp36m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -105,7 +105,7 @@ workflows:
       - prepare:
           exec: { name: x86, pyver: cp37-cp37m }
       - release:
-          exec: { name: x86, pyver: cp37-cp37m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -114,7 +114,7 @@ workflows:
       - prepare:
           exec: { name: x86, pyver: cp38-cp38 }
       - release:
-          exec: { name: x86, pyver: cp38-cp38 }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -123,7 +123,7 @@ workflows:
       - prepare:
           exec: { name: x64, pyver: cp35-cp35m }
       - release:
-          exec: { name: x64, pyver: cp35-cp35m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -132,7 +132,7 @@ workflows:
       - prepare:
           exec: { name: x64, pyver: cp36-cp36m }
       - release:
-          exec: { name: x64, pyver: cp36-cp36m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
@@ -141,7 +141,7 @@ workflows:
       - prepare:
           exec: { name: x64, pyver: cp37-cp37m }
       - release:
-          exec: { name: x64, pyver: cp37-cp37m }
+          exec: { name: x64, pyver: cp38-cp38 }
           requires: [prepare]
           filters: *release-filter
 
