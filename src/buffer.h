@@ -35,16 +35,16 @@ namespace Yapic { namespace Json {
 	((__required) < (__buffer).end - (__buffer).cursor)
 
 #define MemoryBuffer_EnsureCapacity(__buffer, __required) \
-	(MemoryBuffer_HasEnoughCapacity(__buffer, __required) || (__buffer).EnsureCapacity(__required))
+	(EXPECT_TRUE(MemoryBuffer_HasEnoughCapacity(__buffer, __required) || (__buffer).EnsureCapacity(__required)))
 
 
-// TODO: implement length == 0
-template<typename T, size_t length>
+template<typename T, Py_ssize_t SIZE>
 class MemoryBuffer {
 	public:
 		typedef T Char;
+		static constexpr Py_ssize_t InitialSize = SIZE;
 
-		T initial[length];
+		T initial[SIZE];
 		T* start;
 		T* end;
 		T* cursor;
@@ -52,7 +52,7 @@ class MemoryBuffer {
 		bool is_heap;
 
 		inline explicit MemoryBuffer()
-			: start(initial), end(start + length), cursor(initial),
+			: start(initial), end(start + SIZE), cursor(initial),
 			  maxchar(127), is_heap(false) {
 		}
 
@@ -101,10 +101,10 @@ class MemoryBuffer {
 			return NewString(maxchar);
 		}
 
-		inline PyObject* NewString(T maxchar) {
+		PyObject* NewString(T maxchar) {
 			Py_ssize_t l = cursor - start;
 			PyObject* str = PyUnicode_New(l, maxchar);
-			if (str != NULL) {
+			if (EXPECT_TRUE(str != NULL)) {
 				switch (PyUnicode_KIND(str)) {
 					case PyUnicode_1BYTE_KIND:
 						CopyBytes(PyUnicode_1BYTE_DATA(str), start, l);
@@ -127,15 +127,18 @@ class MemoryBuffer {
 			maxchar = 127;
 		}
 
-		inline bool AppendChar(T ch) {
-			assert(1 < end - cursor);
-			*(cursor++) = ch;
-			return true;
+		bool AppendChar(T ch) {
+			if (EXPECT_TRUE(1 < end - cursor || EnsureCapacity(1))) {
+				*(cursor++) = ch;
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 		template<typename CT>
-		inline bool AppendSlice(CT *data, Py_ssize_t size) {
-			if (size < end - cursor || EnsureCapacity(size)) {
+		bool AppendSlice(CT *data, Py_ssize_t size) {
+			if (EXPECT_TRUE(size < end - cursor || EnsureCapacity(size))) {
 				CopyBytes(cursor, data, size);
 				cursor += size;
 				return true;

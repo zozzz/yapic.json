@@ -31,8 +31,7 @@
 	}
 
 #define __decode_bytes(T) { \
-	BytesDecoder<T, Py_UCS4, 1> decoder((T*) PyBytes_AS_STRING(input), PyBytes_GET_SIZE(input)); \
-	if (!decoder.strBuffer.EnsureCapacity(PyBytes_GET_SIZE(input))) { return NULL; } \
+	BytesDecoder<T, Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder((T*) PyBytes_AS_STRING(input), PyBytes_GET_SIZE(input)); \
 	__decoder_options \
 	return decoder.Decode(); \
 	}

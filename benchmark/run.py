@@ -353,7 +353,7 @@ class ListOfFloatsAsDecimal(Benchmark):
 
     DECODER = (("yapic", lambda v: yapic_json.loads(v, parse_float=decimal.Decimal)),
                ("python", lambda v: py_json.loads(v, parse_float=decimal.Decimal)),
-               ("rapidjson", lambda v: rapidjson.loads(v, use_decimal=True)))
+               ("rapidjson", lambda v: rapidjson.loads(v, number_mode=rapidjson.NM_DECIMAL)))
 
     def get_encode_data(self):
         return [i * math.pi for i in range(100000, 100300)]
@@ -640,6 +640,17 @@ class MypyDataToAscii(Benchmark):
     def get_encode_data(self):
         with codecs.open(path.join(path.dirname(__file__), "builtins.data.json"), "r", "utf-8") as f:
             return py_json.load(f)
+
+
+class MypyDataBytes(Benchmark):
+    """ Mypy data bytes """
+
+    ENCODER = None
+    ITERATIONS = 10
+
+    def get_decode_data(self):
+        with open(path.join(path.dirname(__file__), "builtins.data.json"), "rb") as f:
+            return f.read()
 
 
 class ListViewBase(Benchmark):

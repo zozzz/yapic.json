@@ -90,7 +90,6 @@ template<typename CHIN, typename CHOUT, typename BUFF>
 class StringReader {
 	public:
 		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
-			buffer.Reset();
 			register CHOUT maxchar = 127;
 			CHOUT escaped;
 
@@ -98,7 +97,7 @@ class StringReader {
 				if (*cursor == '"') {
 					goto success;
 				} else if (*cursor == '\\') {
-					if (ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped)) {
+					if (EXPECT_TRUE(ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped))) {
 						maxchar |= escaped;
 						++cursor;
 					} else {
@@ -174,53 +173,38 @@ class StringReader {
 		}
 };
 
-
-
 template<typename CHIN, typename CHOUT, typename BUFF>
 class BytesReader {
 	public:
 		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
-			buffer.Reset();
 			register CHOUT maxchar = 127;
 			register CHOUT tmp = 0;
 
-			while (cursor < inputEnd) {
+			while (cursor < inputEnd && MemoryBuffer_EnsureCapacity(buffer, 1)) {
 				if(BR_IS_UTF8_ASCII(*cursor)) {
 					if (*cursor == '"') {
 						goto success;
 					} else if (*cursor == '\\') {
-						if (StringReader<CHIN, CHOUT, BUFF>::ReadEscapeSeq(cursor, inputStart, inputEnd, tmp) && buffer.AppendChar(tmp)) {
-							maxchar |= tmp;
+						if (StringReader<CHIN, CHOUT, BUFF>::ReadEscapeSeq(cursor, inputStart, inputEnd, tmp)) {
+							maxchar |= (*(buffer.cursor++) = tmp);
 							cursor += 1;
 						} else {
 							return NULL;
 						}
-					} else if (maxchar == 127) {
-						CHIN* begin = cursor;
-						PyObject* result;
-						if (FastAscii(begin, cursor, inputEnd, result)) {
-							*cursorOut = ++cursor;
-							return result;
-						} else if (cursor >= inputEnd) {
-							goto error;
-						} else {
-							buffer.AppendSlice(begin, cursor - begin);
-						}
 					} else {
-						do {
-							*(buffer.cursor++) = *cursor;
-						} while (++cursor < inputEnd && str_state_table[*cursor] == STR_ASCII);
+						*(buffer.cursor++) = *(cursor++);
 					}
-				} else if (ReadChar(cursor, inputEnd, tmp)) {
-					*(buffer.cursor++) = tmp;
-					maxchar |= tmp;
+				} else if (EXPECT_TRUE(ReadChar(cursor, inputEnd, tmp))) {					;
+					maxchar |= (*(buffer.cursor++) = tmp);
 				} else {
 					return Decoder_Error(YapicJson_Err_UTF8Invalid);
 				}
 			}
 
 			error:
-				Decoder_Error(YapicJson_Err_UnexpectedEnd);
+				if (!PyErr_Occurred()) {
+					Decoder_Error(YapicJson_Err_UnexpectedEnd);
+				}
 				return NULL;
 
 			success:
@@ -268,23 +252,6 @@ class BytesReader {
 			}
 
 			return true;
-		}
-
-		static bool FastAscii(CHIN *& begin, CHIN *&cursor, const CHIN * const inputEnd, PyObject *&result) {
-			while (++cursor < inputEnd && str_state_table[*cursor] == STR_ASCII);
-
-			if (*cursor == '"') {
-				Py_ssize_t size = cursor - begin;
-				if ((result = PyUnicode_New(size, 127))) {
-					CopyBytes(PyUnicode_1BYTE_DATA(result), begin, size);
-				} else {
-					PyErr_Clear();
-					return false;
-				}
-				return true;
-			}
-
-			return false;
 		}
 };
 
@@ -353,14 +320,49 @@ class Decoder {
 		char floatBuffer[YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS + 10];
 
 		Decoder_FN(ReadString) {
-			if (parseDate) {
-				PyObject* dt = NULL;
-				if (__read_date(cursor, cursorOut, &dt)) {
-					return dt;
+			PyObject* tmp = NULL;
+
+			if (parseDate && __read_date(cursor, cursorOut, &tmp)) {
+				return tmp;
+			}
+
+			if (sizeof(CHIN) == 1) {
+				if (__read_ascii(cursor, cursorOut, tmp)) {
+					return tmp;
+				} else {
+					strBuffer.Reset();
+					if (*cursorOut - cursor > 0 && !strBuffer.AppendSlice(cursor, *cursorOut - cursor)) {
+						return NULL;
+					}
+					cursor = *cursorOut;
 				}
+			} else {
+				strBuffer.Reset();
 			}
 
 			return READER::Read(cursor, cursorOut, inputStart, inputEnd, strBuffer);
+		}
+
+		inline bool __read_ascii(CHIN* cursor, CHIN **cursorOut, PyObject *&result) {
+			CHIN *begin = cursor;
+			while (str_state_table[*cursor] == STR_ASCII && cursor < inputEnd) {
+				++cursor;
+			}
+
+			if (*cursor == '"') {
+				Py_ssize_t size = cursor - begin;
+				if ((result = PyUnicode_New(size, 127))) {
+					assert(PyUnicode_KIND(result) == PyUnicode_1BYTE_KIND);
+					CopyBytes(PyUnicode_1BYTE_DATA(result), begin, size);
+					*cursorOut = cursor + 1;
+					return true;
+				} else {
+					PyErr_Clear();
+				}
+			}
+
+			*cursorOut = cursor;
+			return false;
 		}
 
 		#define Decoder_IsNumber(ch) \

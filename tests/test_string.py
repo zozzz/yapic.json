@@ -85,6 +85,7 @@ def test_encode_string(value, ensure_ascii):
     [
         "",
         "Hello World",
+        "ASCII-ŲŢƑ8",
         "\r\n\t\b\f\\\"",
         "Árvíztűrő tükörfúrógép",
         "𐌀𐌂𐌃𐌄𐌅𐌆𐌇𐌈𐌉𐌋𐌌𐌍𐌐𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" * 400,
@@ -94,6 +95,7 @@ def test_encode_string(value, ensure_ascii):
     ids=[
         "Empty string",
         "Hello World",
+        "ASCII-UTF8",
         "Escaped chars",
         "Árvíztűrő tükörfúrógép",
         "Long UTF-8 v1",
