@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 from glob import glob
 from pathlib import Path
 from setuptools import setup, Extension
@@ -38,6 +39,8 @@ else:
         extra_compile_args.append("-g3")
     else:
         extra_compile_args.append("-O3")
+if sys.platform == "darwin":
+    os.environ['CC'] = 'g++-9'
 
 sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
