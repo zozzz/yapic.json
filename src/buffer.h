@@ -157,7 +157,7 @@ class FileBuffer: public MemoryBuffer<T, length> {
 		PyObject* write;
 		// FILE fileno;
 
-		using Base::MemoryBuffer;
+		using Base::Base;
 
 		inline ~FileBuffer() {
 			Py_CLEAR(write);

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 from glob import glob
 from pathlib import Path
 from setuptools import setup, Extension
@@ -39,17 +38,6 @@ else:
         extra_compile_args.append("-g3")
     else:
         extra_compile_args.append("-O3")
-
-if sys.platform.lower() == "darwin":
-    ccs = ["/usr/local/bin/g++-8",
-           "/usr/local/bin/g++-9"]
-    cc = None
-    for compiler in ccs:
-        if os.path.isfile(compiler):
-            cc = compiler
-    if cc is None:
-        raise ValueError("You must install g++-8 or above. You can install with homebrew")
-    os.environ["CC"] = cc
 
 sources = glob("libs/double-conversion/double-conversion/*.cc")
 sources.append("src/json.cpp")
