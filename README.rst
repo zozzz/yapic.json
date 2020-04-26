@@ -9,7 +9,7 @@ yapic.json
       :alt: CircleCI
       :target: https://circleci.com/gh/zozzz/yapic.json
 
-.. image:: https://img.shields.io/travis/com/zozzz/yapic.json/release.svg?label=sdist&style=flat-square
+.. image:: https://img.shields.io/travis/com/zozzz/yapic.json/release.svg?label=osx&style=flat-square
       :alt: Travis
       :target: https://travis-ci.com/zozzz/yapic.json
 
@@ -52,7 +52,7 @@ Requirements
 - Only works with Python 3.5 or greater
 - c++ 11 comaptible compiler. *(only if u want to build from source)*
 
-  Wheels provided for windows x86/x64 and linux x86/x64
+  Wheels provided for *windows x86/x64* and *linux x86/x64* and *osx x64*
 
 
 Usage
