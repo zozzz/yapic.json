@@ -63,8 +63,8 @@ class MemoryBuffer {
 		}
 
 		bool EnsureCapacity(Py_ssize_t required) {
-			register Py_ssize_t current_usage = cursor - start;
-			register Py_ssize_t new_size = end - start;
+			Py_ssize_t current_usage = cursor - start;
+			Py_ssize_t new_size = end - start;
 			required += current_usage;
 
 #ifdef NDEBUG
@@ -304,7 +304,7 @@ class ChunkBuffer {
 
 		template<typename O>
 		inline void Write(O* target) const {
-			register Chunk* c = chunksBegin;
+			Chunk* c = chunksBegin;
 
 			for (; c < chunk ; c++) {
 				switch (c->kind) {

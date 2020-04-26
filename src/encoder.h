@@ -234,8 +234,8 @@ class Encoder {
 		template<typename CHIN>
 		inline void __encode_string(const CHIN* input, const CHIN* end) {
 			// printf("AAA %ld -> %ld\n", sizeof(CHIN), sizeof(CHOUT));
-			register CHOUT* out = buffer.cursor;
-			register CHOUT maxchar = buffer.maxchar;
+			CHOUT* out = buffer.cursor;
+			CHOUT maxchar = buffer.maxchar;
 
 			for (;;) {
 				if (*input < 127) { // ASCII -> ASCII | UNICODE
@@ -325,23 +325,23 @@ class Encoder {
 
 		Encoder_FN(EncodeLong) {
 			int is_overflow = 0;
-			register long long value = PyLong_AsLongLongAndOverflow(obj, &is_overflow);
+			long long value = PyLong_AsLongLongAndOverflow(obj, &is_overflow);
 
 			if (is_overflow != 0) {
 				PyErr_SetString(Module::State()->EncodeError, YapicJson_Err_IntOverflow);
-				return NULL;
+				return false;
 			}
 
 			Encoder_EnsureCapacity(LLONG_MAX_LENGTH_IN_CHR + Encoder_EXTRA_CAPACITY);
-			register unsigned long long abs_value = value;
+			unsigned long long abs_value = value;
 
 			if (value < 0) {
 				abs_value = -value;
 				Encoder_AppendFast('-');
 			}
 
-			register CHOUT *end_position = buffer.cursor + LLONG_MAX_LENGTH_IN_CHR;
-			register CHOUT *saved_end_position = end_position;
+			CHOUT *end_position = buffer.cursor + LLONG_MAX_LENGTH_IN_CHR;
+			CHOUT *saved_end_position = end_position;
 
 			do {
 				*(--end_position) = (48 + (abs_value % 10));
@@ -377,7 +377,7 @@ class Encoder {
 					&builder
 				);
 
-				register int size = builder.position();
+				int size = builder.position();
 				if (size) {
 					buffer.cursor += size;
 					CHOUT* cursor = buffer.cursor - 1;
@@ -613,7 +613,7 @@ class Encoder {
 		// 	PyPtr<PyTupleObject> item;
 		// 	PyObject *key;
 		// 	PyObject *value;
-		// 	register Py_ssize_t length = 0;
+		// 	Py_ssize_t length = 0;
 
 		// 	while ((item = PyIter_Next(iterator))) {
 		// 		if (EXPECT_TRUE(PyTuple_CheckExact(item) && PyTuple_GET_SIZE(item) == 2)) {
@@ -667,7 +667,7 @@ class Encoder {
 			PyObject* item = NULL;
 			PyObject *key;
 			PyObject *value;
-			register Py_ssize_t length = 0;
+			Py_ssize_t length = 0;
 
 			while ((item = PyIter_Next(iterator))) {
 				if (EXPECT_TRUE(PyTuple_CheckExact(item)) && EXPECT_TRUE(PyTuple_GET_SIZE(item) == 2)) {
@@ -720,8 +720,8 @@ class Encoder {
 			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
 			Encoder_AppendFast('[');
 
-			register Py_ssize_t length = PyList_GET_SIZE(obj);
-			register Py_ssize_t i = 0;
+			Py_ssize_t length = PyList_GET_SIZE(obj);
+			Py_ssize_t i = 0;
 
 			for (; i<length ; i++) {
 				if (Encode(PyList_GET_ITEM(obj, i))) {
@@ -746,8 +746,8 @@ class Encoder {
 			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
 			Encoder_AppendFast('[');
 
-			register Py_ssize_t length = PyTuple_GET_SIZE(obj);
-			register Py_ssize_t i = 0;
+			Py_ssize_t length = PyTuple_GET_SIZE(obj);
+			Py_ssize_t i = 0;
 
 			for (; i<length ; i++) {
 				if (Encode(PyTuple_GET_ITEM(obj, i))) {
@@ -778,7 +778,7 @@ class Encoder {
 			}
 
 			PyObject *item;
-			register Py_ssize_t length = 0;
+			Py_ssize_t length = 0;
 
 			while ((item = PyIter_Next(iterator))) {
 				if (EXPECT_TRUE(Encode(item))) {

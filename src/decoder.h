@@ -90,7 +90,7 @@ template<typename CHIN, typename CHOUT, typename BUFF>
 class StringReader {
 	public:
 		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
-			register CHOUT maxchar = 127;
+			CHOUT maxchar = 127;
 			CHOUT escaped;
 
 			while (cursor < inputEnd) {
@@ -177,8 +177,8 @@ template<typename CHIN, typename CHOUT, typename BUFF>
 class BytesReader {
 	public:
 		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
-			register CHOUT maxchar = 127;
-			register CHOUT tmp = 0;
+			CHOUT maxchar = 127;
+			CHOUT tmp = 0;
 
 			while (cursor < inputEnd && MemoryBuffer_EnsureCapacity(buffer, 1)) {
 				if(BR_IS_UTF8_ASCII(*cursor)) {
@@ -194,19 +194,14 @@ class BytesReader {
 					} else {
 						*(buffer.cursor++) = *(cursor++);
 					}
-				} else if (EXPECT_TRUE(ReadChar(cursor, inputEnd, tmp))) {					;
+				} else if (EXPECT_TRUE(ReadChar(cursor, inputEnd, tmp))) {
 					maxchar |= (*(buffer.cursor++) = tmp);
 				} else {
 					return Decoder_Error(YapicJson_Err_UTF8Invalid);
 				}
 			}
 
-			error:
-				if (!PyErr_Occurred()) {
-					Decoder_Error(YapicJson_Err_UnexpectedEnd);
-				}
-				return NULL;
-
+			return Decoder_Error(YapicJson_Err_UnexpectedEnd);
 			success:
 				*cursorOut = ++cursor;
 				return buffer.NewString(maxchar);
@@ -665,7 +660,7 @@ class Decoder {
 
 		template<typename Trait, typename FloatTrait>
 		inline PyObject* __read_number(CHIN *cursor, CHIN **cursorOut) {
-			register typename Trait::Int intValue = 0;
+			typename Trait::Int intValue = 0;
 			char* floatData = floatBuffer;
 			char* floatDataEnd = floatBuffer + YAPIC_JSON_DOUBLE_MAX_SIGNIFICANT_DIGITS;
 			int exponent = 0;
@@ -815,8 +810,8 @@ class Decoder {
 		}
 
 		Decoder_FN(ReadList) {
-			register PyObject* list = PyList_New(0);
-			register PyObject* item;
+			PyObject* list = PyList_New(0);
+			PyObject* item;
 			if (list == NULL) {
 				return NULL;
 			}
@@ -866,9 +861,9 @@ class Decoder {
 			}
 
 		Decoder_FN(ReadDict) {
-			register PyObject* dict = PyDict_New();
-			register PyObject* key = NULL;
-			register PyObject* value = NULL;
+			PyObject* dict = PyDict_New();
+			PyObject* key = NULL;
+			PyObject* value = NULL;
 
 			if (dict == NULL) {
 				return NULL;
