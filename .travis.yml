@@ -1,9 +1,5 @@
-matrix:
-  include:
-    - language: python
-      dist: xenial
-      sudo: required
-      python: "3.7"
+language: python
+python: [3.8]
 
 git:
   submodules: false
@@ -17,18 +13,47 @@ install:
 
 script:
   - rm -rf pytest.py
-  - python3 setup.py sdist
 
-  # test sdis
-  - cd dist
-  - tar xvzf yapic*.tar.gz
-  - cd "$(ls -d */ | grep yapic)"
-  - python3 setup.py bdist_wheel
+stages:
+  - name: test
+  - name: deploy
+    if: tag IS PRESENT
 
-  - python3 -m pip install --upgrade dist/*.whl
-  - python3 -m pytest -x -s ../../tests/
-  - >-
-    if [ "${TRAVIS_TAG:-}" != "" ]; then
-      python3 -m pip install twine;
-      python3 -m twine upload --skip-existing ../../dist/*.tar.gz;
-    fi
+jobs:
+  include:
+    - stage: test
+      name: "Test: Linux"
+      script: python3 setup.py test -f tests
+
+    - stage: deploy
+      name: "Deploy: Linux"
+      install: python3 -m pip install --upgrade twine
+      script:
+        - python3 setup.py sdist
+
+        # test sdis
+        - cd dist
+        - tar xvzf yapic*.tar.gz
+        - cd "$(ls -d */ | grep yapic)"
+        - python3 setup.py bdist_wheel
+
+        - python3 -m pip install --upgrade dist/*.whl
+        - python3 -m pytest -x -s ../../tests/
+        - python3 -m twine upload --skip-existing ../../dist/*.tar.gz
+
+    - stage: test
+      name: "Test: OSX"
+      os: osx
+      language: shell
+      script: python3 setup.py test -f tests
+
+    - stage: deploy
+      name: "Deploy: OSX"
+      os: osx
+      language: shell
+      env:
+        - "CIBW_BUILD=cp3?-*"
+      install: python3 -m pip install --upgrade cibuildwheel twine
+      script: python3 -m cibuildwheel --output-dir wheelhouse
+      after_success: |
+        python3 -m twine upload --skip-existing wheelhouse/*.whl
