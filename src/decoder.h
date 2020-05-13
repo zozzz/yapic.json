@@ -692,6 +692,8 @@ class Decoder {
 				++cursor;
 				if (*cursor == '.') {
 					goto read_fraction;
+				} else if (*cursor == 'e' || *cursor == 'E') {
+					goto read_exponent;
 				} else {
 					*cursorOut = cursor;
 					return PyLong_FromLong(0);
