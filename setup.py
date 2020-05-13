@@ -7,7 +7,7 @@ from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 from setuptools import Command
 
-VERSION = "1.4.4"
+VERSION = "1.4.5"
 
 define_macros = {
     "YAPIC_JSON_VERSION_MAJOR": VERSION.split(".")[0],
