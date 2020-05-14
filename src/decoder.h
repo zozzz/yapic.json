@@ -691,8 +691,10 @@ class Decoder {
 			} else if (*cursor == '0') {
 				++cursor;
 				if (*cursor == '.') {
+					*(floatData++) = '0';
 					goto read_fraction;
 				} else if (*cursor == 'e' || *cursor == 'E') {
+					*(floatData++) = '0';
 					goto read_exponent;
 				} else {
 					*cursorOut = cursor;
