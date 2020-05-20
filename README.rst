@@ -121,7 +121,7 @@ Functions
       >>> from yapic import json
       >>> def default_func(o):
       ...     if isinstance(o, complex):
-      ...         return {"__complex__":True, "real":1, "imag":2}
+      ...         return {"__complex__": True, "real": 1, "imag": 2}
       ...
       >>> json.dumps(1 + 2j, default=default_func)
       '{"__complex__":true,"real":1,"imag":2}'
@@ -136,7 +136,7 @@ Functions
       ...         self.x = x
       ...         self.y = y
       ...     def __json__(self):
-      ...         return {"x":self.x, "y":self.y}
+      ...         return {"x": self.x, "y": self.y}
       ...
       >>> json.dumps(Point(10, 20))
       '{"x":10,"y":20}'
@@ -150,15 +150,47 @@ Exceptions
 - ``yapic.json.JsonDecodeError``: exception class for decoding errors
 
 
-Release Process
----------------
+Json to Python translations
+---------------------------
 
-- change ``VERSION`` in ``setup.py``
-- ``git add setup.py``
-- ``git commit -m "chore(bump): VERSION"``
-- ``git checkout release``
-- ``git merge master``
-- ``git tag -a VERSION -m "chore(bump): VERSION"``
-- ``git push && git push --tags``
-- ``git checkout master``
-- ``git merge release``
+.. csv-table::
+   :header: Json, Python
+
+   """string""", "str"
+   "42", "int"
+   "4.2, 4e2", "float (unless you specify parse_float)"
+   "Infinity", "float(""inf"")"
+   "NaN", "float(""NaN"")"
+   "true", "True"
+   "false", "False"
+   "null", "None"
+   "2000-01-01 12:34:56", "datetime without timezone"
+   "2000-01-01 12:34:56Z", "datetime with utc timezone"
+   "2000-01-01 12:34:56+0300", "datetime with custom timezone"
+   "2000-01-01", "date"
+   "10:12:34", "time without timezone"
+   "10:12:34+0300", "time with custom timezone"
+   "{...}", "dict (unless you specify object_hook)"
+   "[...]", "list"
+
+
+Python to Json translations
+---------------------------
+
+.. csv-table::
+   :header: Python, Json
+
+   "str", """..."""
+   "int(42)", "42"
+   "float(4.2), Decimal(4.2)", "4.2"
+   "float(""inf""), Decimal(""inf"")", "Infinity"
+   "float(""nan""), Decimal(""nan"")", "NaN"
+   "True", "true"
+   "False", "false"
+   "None", "null"
+   "datetime", """2000-01-01 12:34:56"", ""2000-01-01T12:34:56+0300"""
+   "date", """2000-01-01"""
+   "time", """12:34:56"", ""12:34:56+0300"""
+   "UUID", """aba04c17-6ea3-48c1-8dcd-74f0a9b79bee"""
+   "dict, ItemsView", "{...}"
+   "list, tuple, set, iterable", "[...]"
