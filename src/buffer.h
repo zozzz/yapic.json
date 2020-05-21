@@ -44,15 +44,15 @@ class MemoryBuffer {
 		typedef T Char;
 		static constexpr Py_ssize_t InitialSize = SIZE;
 
+		T* cursor;
 		T* start;
 		T* end;
-		T* cursor;
 		T maxchar;
 		bool is_heap;
 		T initial[SIZE];
 
 		inline explicit MemoryBuffer()
-			: start(initial), end(start + SIZE), cursor(initial),
+			: cursor(initial), start(initial), end(start + SIZE),
 			  maxchar(127), is_heap(false) {
 		}
 
@@ -77,18 +77,17 @@ class MemoryBuffer {
 
 			if (is_heap == true) {
 				start = (T*) YapicJson_Realloc(start, sizeof(T) * new_size);
-				if (start == NULL) {
+				IF_UNLIKELY (start == NULL) {
 					PyErr_NoMemory();
 					return false;
 				}
 			} else {
-				T* current_start = start;
 				start = (T*) YapicJson_Malloc(sizeof(T) * new_size);
-				if (start == NULL) {
+				IF_UNLIKELY (start == NULL) {
 					PyErr_NoMemory();
 					return false;
 				}
-				CopyBytes(start, current_start, current_usage);
+				CopyBytes(start, initial, current_usage);
 				is_heap = true;
 			}
 
@@ -120,6 +119,11 @@ class MemoryBuffer {
 				}
 			}
 			return str;
+		}
+
+		inline PyObject* NewBytes() {
+			assert(sizeof(T) == 1);
+			return PyBytes_FromStringAndSize(reinterpret_cast<char*>(start), cursor - start);
 		}
 
 		inline void Reset() {

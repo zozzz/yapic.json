@@ -234,67 +234,36 @@ class Encoder {
 		inline void __encode_string(const CHIN* input, const CHIN* end) {
 			CHOUT* out = buffer.cursor;
 			CHOUT maxchar = buffer.maxchar;
+			CHIN ch;
 
 			for (;;) {
-				if (*input < (EnsureAscii ? 127 : 128)) { // ASCII -> ASCII | UNICODE
-					IF_LIKELY (*input > 31) {
-						if (*input == '\\') {
+				if ((ch = *input) < (EnsureAscii ? 127 : 128)) { // ASCII -> ASCII | UNICODE
+					IF_LIKELY (ch > 31) {
+						if (ch == '\\' || ch == '"') {
 							StringEncoder_AppendChar('\\');
-							StringEncoder_AppendChar('\\');
-							++input;
-						} else if (*input == '"') {
-							StringEncoder_AppendChar('\\');
-							StringEncoder_AppendChar('"');
-							++input;
+							StringEncoder_AppendChar(ch);
 						} else {
-							#pragma warning(suppress: 4244)
-							StringEncoder_AppendChar(*(input++));
+							StringEncoder_AppendChar(ch);
 						}
-					} else {
-						StringEncoder_AppendChar('\\');
-						switch (*input) {
-							case '\r': StringEncoder_AppendChar('r'); break;
-							case '\n': StringEncoder_AppendChar('n'); break;
-							case '\t': StringEncoder_AppendChar('t'); break;
-							case '\b': StringEncoder_AppendChar('b'); break;
-							case '\f': StringEncoder_AppendChar('f'); break;
-							case 0:
-								if (input >= end) {
-									buffer.cursor = --out;
-									buffer.maxchar = maxchar;
-									return;
-								}
-							default:
-								StringEncoder_AppendChar('u');
-								StringEncoder_AppendChar('0');
-								StringEncoder_AppendChar('0');
-								StringEncoder_AppendChar(HEX_CHAR((*input & 0xF0) >> 4));
-								StringEncoder_AppendChar(HEX_CHAR((*input & 0x0F)));
-							break;
-						}
-						++input;
+					} else if (__encode_escapes(out, ch, input, end)) {
+						buffer.cursor = --out;
+						buffer.maxchar = maxchar;
+						return;
 					}
 				} else if (EnsureAscii) {
+					StringEncoder_AppendChar('\\');
+					StringEncoder_AppendChar('u');
 					if (sizeof(CHIN) == 1) {
-						StringEncoder_AppendChar('\\');
-						StringEncoder_AppendChar('u');
 						StringEncoder_AppendChar('0');
 						StringEncoder_AppendChar('0');
-						StringEncoder_AppendChar(HEX_CHAR((*input & 0xF0) >> 4));
-						StringEncoder_AppendChar(HEX_CHAR((*(input++) & 0x0F)));
+						StringEncoder_AppendChar(HEX_CHAR((ch & 0xF0) >> 4));
+						StringEncoder_AppendChar(HEX_CHAR((ch & 0x0F)));
 					} else if (sizeof(CHIN) == 2) {
-						StringEncoder_AppendChar('\\');
-						StringEncoder_AppendChar('u');
-						StringEncoder_AppendChar(HEX_CHAR( (*input >> 12) ));
-						StringEncoder_AppendChar(HEX_CHAR( (*input >> 8) & 0xF ));
-						StringEncoder_AppendChar(HEX_CHAR( (*input >> 4) & 0xF ));
-						StringEncoder_AppendChar(HEX_CHAR( *(input++) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 12) ));
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 8) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 4) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( ch & 0xF ));
 					} else if (sizeof(CHIN) == 4) {
-						StringEncoder_AppendChar('\\');
-						StringEncoder_AppendChar('u');
-
-						CHIN ch = *(input++);
-
 						if (ch > 0xFFFF) {
 							CHIN high = 0xD800 - (0x10000 >> 10) + (ch >> 10);
 							StringEncoder_AppendChar('d');
@@ -313,16 +282,14 @@ class Encoder {
 						StringEncoder_AppendChar(HEX_CHAR( ch & 0xF ));
 					}
 				} else if (sizeof(CHOUT) == 1) {
-					CHIN ch = *(input++);
-
-					if (ch <= 0x7FF ) { // 2 byte
+					if (ch < 0x0800 ) { // 2 byte
 						StringEncoder_AppendChar( Encoder_UTF8_2BYTE_START | (ch >> 6) );
 						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch & 0x3F) );
-					} else if (ch <= 0xFFFF) { // 3 byte
+					} else if (ch < 0x10000) { // 3 byte
 						StringEncoder_AppendChar( Encoder_UTF8_3BYTE_START | (ch >> 12) );
 						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 6 & 0x3F) );
 						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch & 0x3F) );
-					} else if (sizeof(CHIN) == 4 && ch <= 0x1FFFFF) { // 4 byte
+					} else if (sizeof(CHIN) == 4) { // 4 byte
 						StringEncoder_AppendChar( Encoder_UTF8_4BYTE_START | (ch >> 18) );
 						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 12 & 0x3F) );
 						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 6 & 0x3F) );
@@ -330,10 +297,35 @@ class Encoder {
 					}
 				} else {
 					assert(sizeof(CHIN) <= sizeof(CHOUT));
-					maxchar |= *input;
-					StringEncoder_AppendChar(*(input++));
+					maxchar |= ch;
+					StringEncoder_AppendChar(ch);
 				}
+				input += 1;
 			}
+		}
+
+		template<typename CHIN>
+		bool __encode_escapes(CHOUT *&out, CHIN &ch, const CHIN *input, const CHIN *end) {
+			StringEncoder_AppendChar('\\');
+			switch (ch) {
+				case '\r': StringEncoder_AppendChar('r'); break;
+				case '\n': StringEncoder_AppendChar('n'); break;
+				case '\t': StringEncoder_AppendChar('t'); break;
+				case '\b': StringEncoder_AppendChar('b'); break;
+				case '\f': StringEncoder_AppendChar('f'); break;
+				case 0:
+					if (input >= end) {
+						return true;
+					}
+				default:
+					StringEncoder_AppendChar('u');
+					StringEncoder_AppendChar('0');
+					StringEncoder_AppendChar('0');
+					StringEncoder_AppendChar(HEX_CHAR((ch & 0xF0) >> 4));
+					StringEncoder_AppendChar(HEX_CHAR((ch & 0x0F)));
+				break;
+			}
+			return false;
 		}
 
 		Encoder_FN(EncodeLong) {

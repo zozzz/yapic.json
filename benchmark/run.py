@@ -246,6 +246,7 @@ class StringMixedUnicodeTextToAscii(Benchmark):
 class BytesC1000AsciiToAscii(Benchmark):
     """ Bytes: 1000 ASCII char """
     ENCODER = None
+
     def get_decode_data(self):
         return b'"' + ("ABCDE" * 200).encode("utf-8") + b'"'
 
@@ -253,6 +254,7 @@ class BytesC1000AsciiToAscii(Benchmark):
 class BytesC200ExtendedAsciiToAscii(Benchmark):
     """ Bytes: 1000 Extended ASCII char """
     ENCODER = None
+
     def get_decode_data(self):
         return b'"' + ("ÁáÉéÍ" * 200).encode("utf-8") + b'"'
 
@@ -260,6 +262,7 @@ class BytesC200ExtendedAsciiToAscii(Benchmark):
 class BytesC1000AsciiToUnicode(Benchmark):
     """ Bytes: 1000 ASCII char """
     ENCODER = None
+
     def get_decode_data(self):
         return b'"' + ("ABCDE" * 200).encode("utf-8") + b'"'
 
@@ -267,6 +270,7 @@ class BytesC1000AsciiToUnicode(Benchmark):
 class BytesC200ExtendedAsciiToUnicode(Benchmark):
     """ Bytes: 200 Extended ASCII char """
     ENCODER = None
+
     def get_decode_data(self):
         return b'"' + ("ÁŐ" * 100).encode("utf-8") + b'"'
 
@@ -275,14 +279,18 @@ class Bytes2BUnicodeTextToAscii(Benchmark):
     """ Bytes: 2B Unicode text """
     ENCODER = None
     ITERATIONS = 100
+
     def get_decode_data(self):
-        return b'"' + ("Език за програмиране е изкуствен език, предназначен за изразяване на изчисления, които могат да се извършат от машина, по-специално от компютър. Езиците за програмиране могат да се използват за създаване на програми, които контролират поведението на машина, да  реализират алгоритми точно или във вид на човешка комуникация." * 200).encode("utf-8") + b'"'
+        return b'"' + (
+            "Език за програмиране е изкуствен език, предназначен за изразяване на изчисления, които могат да се извършат от машина, по-специално от компютър. Езиците за програмиране могат да се използват за създаване на програми, които контролират поведението на машина, да  реализират алгоритми точно или във вид на човешка комуникация."
+            * 200).encode("utf-8") + b'"'
 
 
 class Bytes4BUnicodeTextToAscii(Benchmark):
     """ Bytes: 4B Unicode text """
     ENCODER = None
     ITERATIONS = 100
+
     def get_decode_data(self):
         return b'"' + ("𐌀𐌂𐌃𐌄𐌅𐌆𐌇𐌈𐌉𐌋𐌌𐌍𐌐𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚" * 400).encode("utf-8") + b'"'
 
@@ -291,8 +299,11 @@ class BytesMixedUnicodeTextToAscii(Benchmark):
     """ Bytes: Mixed Unicode text """
     ENCODER = None
     ITERATIONS = 100
+
     def get_decode_data(self):
-        bytes = ((r"𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ") * 200).encode("utf-8")
+        bytes = (
+            (r"𐌀𐌂𐌃 𐌄𐌅𐌆𐌇𐌈\n𐌉𐌋𐌌𐌍𐌐\"𐌑𐌓𐌔𐌕𐌖𐌘𐌙𐌚ABCD EFGHIJ\t\t\nKLMNOP\nQRSTUV W XY ZЕзик за програмиране е изкÁí óéÉ\náÍÓ") *
+            200).encode("utf-8")
         return b'"' + bytes + b'"'
 
 

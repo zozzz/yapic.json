@@ -30,6 +30,9 @@ UNPRINTABLE_ESCAPES = frozenset([
 ])
 
 
+UNPRINTABLE_ESCAPES = frozenset(list(range(1, 32)) + [0x7F])
+
+
 class Generator:
     ASCII = set(range(1, 128))
     EXTENDED_ASCII = set(range(128, 256))
@@ -41,27 +44,19 @@ class Generator:
     ESC_TAB = set([ord('\t')])
     ESC_BS = set([ord('\b')])
     ESC_FF = set([ord('\f')])
-    ESC_DEL = set([0x7F])
 
     ESCAPED = ESC_DQUOTE | ESC_BSLASH | ESC_CR | ESC_LF | ESC_TAB | ESC_BS | ESC_FF
 
     STATES = (
-        ("ASCII", ASCII - UNPRINTABLE_ESCAPES - ESCAPED - ESC_DEL),
+        ("ASCII", ASCII - UNPRINTABLE_ESCAPES - ESCAPED),
+        # ("EXTENDED_ASCII", EXTENDED_ASCII),
+        ("COMMON_ESCAPES", ESCAPED),
+        ("UNPRINTABLE_ESCAPES", UNPRINTABLE_ESCAPES - ESCAPED),
         ("NULL", set([0])),
-        ("ESC_DQUOTE", ESC_DQUOTE),
-        ("ESC_BSLASH", ESC_BSLASH),
-        ("ESC_CR", ESC_CR),
-        ("ESC_LF", ESC_LF),
-        ("ESC_TAB", ESC_TAB),
-        ("ESC_BS", ESC_BS),
-        ("ESC_FF", ESC_FF),
-        ("ESC_DEL", ESC_DEL),
-        ("UNPRINTABLE_ESCAPES", UNPRINTABLE_ESCAPES),
-        ("EXTENDED_ASCII", EXTENDED_ASCII)
     )
 
     def expand_states(self):
-        for i in range(0, 256):
+        for i in range(0, 128):
             for state_idx, state in enumerate(self.STATES):
                 if i in state[1]:
                     yield state_idx
@@ -72,19 +67,19 @@ class Generator:
 
     def generate(self, f):
         for macro_name, macro_value in self.state_macro():
-            f.write("#define ENCODE_STATE_%s %s\n\n" % (macro_name, macro_value))
+            f.write("#define YAPIC_ENCODE_STATE_%s %s\n\n" % (macro_name, macro_value))
 
-        f.write("static const unsigned char AsciiEncodeState[256] = {\n\t")
+        f.write("static const unsigned char str_encode_table[128] = {\n\t")
 
         for i, state in enumerate(self.expand_states()):
             f.write("{0:<2}".format(state))
 
-            if i != 255:
+            if i != 127:
                 f.write(",")
 
             if (i + 1) % 16 == 0:
                 f.write("\n")
-                if i != 255:
+                if i != 127:
                     f.write("\t")
 
         f.write("};\n\n")
@@ -92,5 +87,5 @@ class Generator:
 
 if __name__ == "__main__":
     from os import path
-    with open(path.join("..", "src", "str_encode_state.h"), "w") as f:
+    with open(path.join("..", "src", "str_encode_table.h"), "w") as f:
         Generator().generate(f)

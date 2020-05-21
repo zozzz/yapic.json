@@ -79,14 +79,14 @@ namespace Yapic { namespace Json {
 			&obj, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime)) {
 
 			if (ensureAscii == true) {
-				__encode_new_encoder(Encoder, BytesBuffer, Py_UCS1, true);
+				__encode_new_encoder(Encoder, MemoryBuffer, Py_UCS1, true);
 				IF_LIKELY (encoder.Encode(obj)) {
-					return encoder.buffer.NewString();
+					return encoder.buffer.NewBytes();
 				}
 			} else {
-				__encode_new_encoder(Encoder, BytesBuffer, Py_UCS1, false);
+				__encode_new_encoder(Encoder, MemoryBuffer, Py_UCS1, false);
 				IF_LIKELY (encoder.Encode(obj)) {
-					return encoder.buffer.NewString();
+					return encoder.buffer.NewBytes();
 				}
 			}
 		}
