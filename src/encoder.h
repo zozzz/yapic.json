@@ -53,28 +53,23 @@ using namespace double_conversion;
 
 #define HEX_CHAR(idx) ("0123456789abcdef"[(idx)])
 
-
-// struct EncoderOptions {
-// 	PyObject* defaultFn;
-// 	PyObject* toJsonMethodName;
-// 	int maxRecursionDepth;
-// 	bool encodeDatetime;
-// };
+#define Encoder_UTF8_2BYTE_START 0xC0
+#define Encoder_UTF8_3BYTE_START 0xE0
+#define Encoder_UTF8_4BYTE_START 0xF0
+#define Encoder_UTF8_CONTINUATION 0x80
 
 
-template<typename BUFF>
+template<typename BUFF, bool EnsureAscii>
 class Encoder {
 	public:
 		typedef typename BUFF::Char CHOUT;
 		BUFF buffer;
 
-		// const EncoderOptions* options;
 		PyObject* defaultFn;
 		PyObject* toJsonMethodName;
 		int maxRecursionDepth;
-		bool encodeDatetime;
-		bool encodeHomogene;
 		int recursionDepth;
+		bool encodeDatetime;
 
 		inline explicit Encoder()
 			: recursionDepth(0) {
@@ -85,7 +80,7 @@ class Encoder {
 
 			if (PyUnicode_CheckExact(obj)) {
 				Encoder_AppendFast('"');
-				if (EXPECT_TRUE(EncodeString(obj))) {
+				IF_LIKELY (EncodeString(obj)) {
 					Encoder_AppendFast('"');
 					Encoder_RETURN_TRUE;
 				} else {
@@ -138,7 +133,7 @@ class Encoder {
 			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
 				Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
 				Encoder_AppendFast('"');
-				if (EXPECT_TRUE(EncodeUUID(obj))) {
+				IF_LIKELY (EncodeUUID(obj)) {
 					Encoder_AppendFast('"');
 					Encoder_RETURN_TRUE;
 				} else {
@@ -217,7 +212,11 @@ class Encoder {
 
 				case PyUnicode_4BYTE_KIND:
 					if (sizeof(CHOUT) == 1) {
-						Encoder_EnsureCapacity(length * 12 + Encoder_EXTRA_CAPACITY);
+						if (EnsureAscii) {
+							Encoder_EnsureCapacity(length * 12 + Encoder_EXTRA_CAPACITY);
+						} else {
+							Encoder_EnsureCapacity(length * 6 + Encoder_EXTRA_CAPACITY);
+						}
 					} else {
 						Encoder_EnsureCapacity(length * 6 + Encoder_EXTRA_CAPACITY);
 					}
@@ -233,13 +232,12 @@ class Encoder {
 
 		template<typename CHIN>
 		inline void __encode_string(const CHIN* input, const CHIN* end) {
-			// printf("AAA %ld -> %ld\n", sizeof(CHIN), sizeof(CHOUT));
 			CHOUT* out = buffer.cursor;
 			CHOUT maxchar = buffer.maxchar;
 
 			for (;;) {
-				if (*input < 127) { // ASCII -> ASCII | UNICODE
-					if (*input > 31) {
+				if (*input < (EnsureAscii ? 127 : 128)) { // ASCII -> ASCII | UNICODE
+					IF_LIKELY (*input > 31) {
 						if (*input == '\\') {
 							StringEncoder_AppendChar('\\');
 							StringEncoder_AppendChar('\\');
@@ -276,51 +274,66 @@ class Encoder {
 						}
 						++input;
 					}
-				} else if (sizeof(CHIN) == 1 && sizeof(CHOUT) == 1) { // EXT ASCII -> ASCII
-					StringEncoder_AppendChar('\\');
-					StringEncoder_AppendChar('u');
-					StringEncoder_AppendChar('0');
-					StringEncoder_AppendChar('0');
-					StringEncoder_AppendChar(HEX_CHAR((*input & 0xF0) >> 4));
-					StringEncoder_AppendChar(HEX_CHAR((*(input++) & 0x0F))); // !POINTER INC
-				} else if (sizeof(CHIN) == 2 && sizeof(CHOUT) == 1) { // 2byte UNICODE -> ASCII
-					StringEncoder_AppendChar('\\');
-					StringEncoder_AppendChar('u');
-					StringEncoder_AppendChar(HEX_CHAR( (*input >> 12) ));
-					StringEncoder_AppendChar(HEX_CHAR( (*input >> 8) & 0xF ));
-					StringEncoder_AppendChar(HEX_CHAR( (*input >> 4) & 0xF ));
-					StringEncoder_AppendChar(HEX_CHAR( *(input++) & 0xF ));
-				} else if (sizeof(CHIN) == 4 && sizeof(CHOUT) == 1) { // 4 byte UNICODE -> ASCII
-					StringEncoder_AppendChar('\\');
-					StringEncoder_AppendChar('u');
-
-					CHIN ch = *(input++);
-
-					if (ch > 0xFFFF) {
-						CHIN high = 0xD800 - (0x10000 >> 10) + (ch >> 10);
-						StringEncoder_AppendChar('d');
-						StringEncoder_AppendChar(HEX_CHAR( (high >> 8) & 0xF ));
-						StringEncoder_AppendChar(HEX_CHAR( (high >> 4) & 0xF ));
-						StringEncoder_AppendChar(HEX_CHAR( high & 0xF));
-
+				} else if (EnsureAscii) {
+					if (sizeof(CHIN) == 1) {
 						StringEncoder_AppendChar('\\');
 						StringEncoder_AppendChar('u');
-						ch = 0xDC00 + (ch & 0x3FF);
-					}
+						StringEncoder_AppendChar('0');
+						StringEncoder_AppendChar('0');
+						StringEncoder_AppendChar(HEX_CHAR((*input & 0xF0) >> 4));
+						StringEncoder_AppendChar(HEX_CHAR((*(input++) & 0x0F)));
+					} else if (sizeof(CHIN) == 2) {
+						StringEncoder_AppendChar('\\');
+						StringEncoder_AppendChar('u');
+						StringEncoder_AppendChar(HEX_CHAR( (*input >> 12) ));
+						StringEncoder_AppendChar(HEX_CHAR( (*input >> 8) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( (*input >> 4) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( *(input++) & 0xF ));
+					} else if (sizeof(CHIN) == 4) {
+						StringEncoder_AppendChar('\\');
+						StringEncoder_AppendChar('u');
 
-					StringEncoder_AppendChar(HEX_CHAR( (ch >> 12) ));
-					StringEncoder_AppendChar(HEX_CHAR( (ch >> 8) & 0xF ));
-					StringEncoder_AppendChar(HEX_CHAR( (ch >> 4) & 0xF ));
-					StringEncoder_AppendChar(HEX_CHAR( ch & 0xF ));
-				} else if (sizeof(CHOUT) > 1) { // UNICODE -> UNICODE
+						CHIN ch = *(input++);
+
+						if (ch > 0xFFFF) {
+							CHIN high = 0xD800 - (0x10000 >> 10) + (ch >> 10);
+							StringEncoder_AppendChar('d');
+							StringEncoder_AppendChar(HEX_CHAR( (high >> 8) & 0xF ));
+							StringEncoder_AppendChar(HEX_CHAR( (high >> 4) & 0xF ));
+							StringEncoder_AppendChar(HEX_CHAR( high & 0xF));
+
+							StringEncoder_AppendChar('\\');
+							StringEncoder_AppendChar('u');
+							ch = 0xDC00 + (ch & 0x3FF);
+						}
+
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 12) ));
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 8) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( (ch >> 4) & 0xF ));
+						StringEncoder_AppendChar(HEX_CHAR( ch & 0xF ));
+					}
+				} else if (sizeof(CHOUT) == 1) {
+					CHIN ch = *(input++);
+
+					if (ch <= 0x7FF ) { // 2 byte
+						StringEncoder_AppendChar( Encoder_UTF8_2BYTE_START | (ch >> 6) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch & 0x3F) );
+					} else if (ch <= 0xFFFF) { // 3 byte
+						StringEncoder_AppendChar( Encoder_UTF8_3BYTE_START | (ch >> 12) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 6 & 0x3F) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch & 0x3F) );
+					} else if (sizeof(CHIN) == 4 && ch <= 0x1FFFFF) { // 4 byte
+						StringEncoder_AppendChar( Encoder_UTF8_4BYTE_START | (ch >> 18) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 12 & 0x3F) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch >> 6 & 0x3F) );
+						StringEncoder_AppendChar( Encoder_UTF8_CONTINUATION | (ch & 0x3F) );
+					}
+				} else {
+					assert(sizeof(CHIN) <= sizeof(CHOUT));
 					maxchar |= *input;
 					StringEncoder_AppendChar(*(input++));
-				} else {
-					assert(0);
 				}
 			}
-
-			assert(0);
 		}
 
 		Encoder_FN(EncodeLong) {
@@ -580,10 +593,10 @@ class Encoder {
 
 			while (PyDict_Next(obj, &pos, &key, &value)) {
 				Encoder_AppendFast('"');
-				if (EXPECT_TRUE(__encode_dict_key(key))) {
+				IF_LIKELY (__encode_dict_key(key)) {
 					Encoder_AppendFast('"');
 					Encoder_AppendFast(':');
-					if (EXPECT_TRUE(Encode(value))) {
+					IF_LIKELY (Encode(value)) {
 						Encoder_AppendFast(',');
 					} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_DictValue, value, key)
 					} else {
@@ -601,60 +614,6 @@ class Encoder {
 			Encoder_RETURN_TRUE;
 		}
 
-		// Encoder_FN(_EncodeItemsView) {
-		// 	Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
-		// 	Encoder_AppendFast('{');
-
-		// 	PyPtr<> iterator = PyObject_GetIter(obj);
-		// 	if (!iterator) {
-		// 		Encoder_RETURN_FALSE;
-		// 	}
-
-		// 	PyPtr<PyTupleObject> item;
-		// 	PyObject *key;
-		// 	PyObject *value;
-		// 	Py_ssize_t length = 0;
-
-		// 	while ((item = PyIter_Next(iterator))) {
-		// 		if (EXPECT_TRUE(PyTuple_CheckExact(item) && PyTuple_GET_SIZE(item) == 2)) {
-		// 			key = PyTuple_GET_ITEM(item, 0);
-		// 			value = PyTuple_GET_ITEM(item, 1);
-
-		// 			Encoder_AppendFast('"');
-		// 			if (EXPECT_TRUE(__encode_dict_key(key))) {
-		// 				Encoder_AppendFast('"');
-		// 				Encoder_AppendFast(':');
-		// 				if (EXPECT_TRUE(Encode(value))) {
-		// 					Encoder_AppendFast(',');
-		// 					++length;
-		// 				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewValue, value, key)
-		// 				} else {
-		// 					Encoder_RETURN_FALSE;
-		// 				}
-		// 			} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewKey, key)
-		// 			} else {
-		// 				Encoder_RETURN_FALSE;
-		// 			}
-		// 		} else {
-		// 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_ItemsViewTuple, item.AsObject());
-		// 			Encoder_RETURN_FALSE;
-		// 		}
-		// 	}
-
-		// 	if (PyErr_Occurred()) {
-		// 		Encoder_RETURN_FALSE;
-		// 	}
-
-		// 	if (length > 0) {
-		// 		--buffer.cursor; // overwrite last ','
-		// 	}
-
-		// 	Encoder_AppendFast('}');
-		// 	Encoder_LeaveRecursive();
-		// 	Encoder_RETURN_TRUE;
-		// }
-
-
 		Encoder_FN(EncodeItemsView) {
 			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
 			Encoder_AppendFast('{');
@@ -670,15 +629,15 @@ class Encoder {
 			Py_ssize_t length = 0;
 
 			while ((item = PyIter_Next(iterator))) {
-				if (EXPECT_TRUE(PyTuple_CheckExact(item)) && EXPECT_TRUE(PyTuple_GET_SIZE(item) == 2)) {
+				IF_LIKELY (PyTuple_CheckExact(item) && PyTuple_GET_SIZE(item) == 2) {
 					key = PyTuple_GET_ITEM(item, 0);
 					value = PyTuple_GET_ITEM(item, 1);
 
 					Encoder_AppendFast('"');
-					if (EXPECT_TRUE(__encode_dict_key(key))) {
+					IF_LIKELY (__encode_dict_key(key)) {
 						Encoder_AppendFast('"');
 						Encoder_AppendFast(':');
-						if (EXPECT_TRUE(Encode(value))) {
+						IF_LIKELY (Encode(value)) {
 							Encoder_AppendFast(',');
 							++length;
 						} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_ItemsViewValue, value, key)
@@ -781,7 +740,7 @@ class Encoder {
 			Py_ssize_t length = 0;
 
 			while ((item = PyIter_Next(iterator))) {
-				if (EXPECT_TRUE(Encode(item))) {
+				IF_LIKELY (Encode(item)) {
 					Py_DECREF(item);
 					Encoder_AppendFast(',');
 					++length;
@@ -814,11 +773,11 @@ class Encoder {
 			Encoder_EnterRecursive();
 			PyObject *toJson = PyObject_CallFunctionObjArgs(defaultFn, obj, NULL);
 
-			if (toJson == NULL) {
+			IF_UNLIKELY (toJson == NULL) {
 				Encoder_RETURN_FALSE;
 			}
 
-			if (EXPECT_TRUE((isDictKey ? __encode_dict_key(toJson) : Encode(toJson)))) {
+			IF_LIKELY ((isDictKey ? __encode_dict_key(toJson) : Encode(toJson))) {
 				Py_DECREF(toJson);
 				Encoder_LeaveRecursive();
 				Encoder_RETURN_TRUE;
@@ -837,11 +796,11 @@ class Encoder {
 			Encoder_EnterRecursive();
 			PyObject *toJson = PyObject_CallMethodObjArgs(obj, toJsonMethodName, NULL);
 
-			if (toJson == NULL) {
+			IF_UNLIKELY (toJson == NULL) {
 				Encoder_RETURN_FALSE;
 			}
 
-			if (EXPECT_TRUE((isDictKey ? __encode_dict_key(toJson) : Encode(toJson)))) {
+			IF_LIKELY ((isDictKey ? __encode_dict_key(toJson) : Encode(toJson))) {
 				Py_DECREF(toJson);
 				Encoder_LeaveRecursive();
 				Encoder_RETURN_TRUE;

@@ -8,12 +8,11 @@
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 
-#define __encode_new_encoder(B, T) \
-	Encoder< B<T, YAPIC_JSON_ENCODER_BUFFER_SIZE> > encoder; \
+#define __encode_new_encoder(__encoder, __buffer, __type, __ensure_ascii) \
+	__encoder< __buffer<__type, YAPIC_JSON_ENCODER_BUFFER_SIZE>, __ensure_ascii > encoder; \
 	encoder.defaultFn = defaultFn; \
 	encoder.toJsonMethodName = toJsonMethodName; \
 	encoder.encodeDatetime = encodeDatetime; \
-	encoder.encodeHomogene = encodeHomogene; \
 	encoder.maxRecursionDepth = MAXIMUM_RECURSION_DEPTH
 
 
@@ -40,26 +39,25 @@
 namespace Yapic { namespace Json {
 
 	PyObject* Module::dumps(PyObject *module, PyObject *args, PyObject *kwargs) {
-		static char* kwlist[] = {"obj", "ensure_ascii", "default", "tojson", "encode_datetime", "encode_homogene", NULL};
+		static char* kwlist[] = {"obj", "ensure_ascii", "default", "tojson", "encode_datetime", NULL};
 
 		PyObject* obj = NULL;
 		PyObject* defaultFn = NULL;
 		PyObject* toJsonMethodName = Module::State(module)->STR_TOJSON;
 		bool ensureAscii = true;
 		bool encodeDatetime = true;
-		bool encodeHomogene = true;
 
-		if (EXPECT_TRUE(PyArg_ParseTupleAndKeywords(args, kwargs, "O|bOUb", kwlist,
-			&obj, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime, &encodeHomogene))) {
+		IF_LIKELY (PyArg_ParseTupleAndKeywords(args, kwargs, "O|bOUb", kwlist,
+			&obj, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime)) {
 
 			if (ensureAscii == true) {
-				__encode_new_encoder(MemoryBuffer, Py_UCS1);
-				if (EXPECT_TRUE(encoder.Encode(obj))) {
+				__encode_new_encoder(Encoder, MemoryBuffer, Py_UCS1, true);
+				IF_LIKELY (encoder.Encode(obj)) {
 					return encoder.buffer.NewString();
 				}
 			} else {
-				__encode_new_encoder(MemoryBuffer, Py_UCS4);
-				if (EXPECT_TRUE(encoder.Encode(obj))) {
+				__encode_new_encoder(Encoder, MemoryBuffer, Py_UCS4, false);
+				IF_LIKELY (encoder.Encode(obj)) {
 					return encoder.buffer.NewString();
 				}
 			}
@@ -68,8 +66,31 @@ namespace Yapic { namespace Json {
 		return NULL;
 	}
 
-
 	PyObject* Module::dumpb(PyObject *module, PyObject *args, PyObject *kwargs) {
+		static char* kwlist[] = {"obj", "ensure_ascii", "default", "tojson", "encode_datetime", NULL};
+
+		PyObject* obj = NULL;
+		PyObject* defaultFn = NULL;
+		PyObject* toJsonMethodName = Module::State(module)->STR_TOJSON;
+		bool ensureAscii = true;
+		bool encodeDatetime = true;
+
+		IF_LIKELY (PyArg_ParseTupleAndKeywords(args, kwargs, "O|bOUb", kwlist,
+			&obj, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime)) {
+
+			if (ensureAscii == true) {
+				__encode_new_encoder(Encoder, BytesBuffer, Py_UCS1, true);
+				IF_LIKELY (encoder.Encode(obj)) {
+					return encoder.buffer.NewString();
+				}
+			} else {
+				__encode_new_encoder(Encoder, BytesBuffer, Py_UCS1, false);
+				IF_LIKELY (encoder.Encode(obj)) {
+					return encoder.buffer.NewString();
+				}
+			}
+		}
+
 		return NULL;
 	}
 
@@ -85,17 +106,17 @@ namespace Yapic { namespace Json {
 		bool encodeDatetime = true;
 		bool encodeHomogene = true;
 
-		if (EXPECT_TRUE(PyArg_ParseTupleAndKeywords(args, kwargs, "OO|bOUb", kwlist,
-			&obj, &fp, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime, &encodeHomogene))) {
+		IF_LIKELY (PyArg_ParseTupleAndKeywords(args, kwargs, "OO|bOUb", kwlist,
+			&obj, &fp, &ensureAscii, &defaultFn, &toJsonMethodName, &encodeDatetime, &encodeHomogene)) {
 
 			if (ensureAscii == true) {
-				__encode_new_encoder(FileBuffer, Py_UCS1);
-				if (EXPECT_TRUE(encoder.buffer.SetTarget(fp) && encoder.Encode(obj) && encoder.buffer.Flush())) {
+				__encode_new_encoder(Encoder, FileBuffer, Py_UCS1, true);
+				IF_LIKELY (encoder.buffer.SetTarget(fp) && encoder.Encode(obj) && encoder.buffer.Flush()) {
 					Py_RETURN_NONE;
 				}
 			} else {
-				__encode_new_encoder(FileBuffer, Py_UCS4);
-				if (EXPECT_TRUE(encoder.buffer.SetTarget(fp) && encoder.Encode(obj) && encoder.buffer.Flush())) {
+				__encode_new_encoder(Encoder, FileBuffer, Py_UCS4, false);
+				IF_LIKELY (encoder.buffer.SetTarget(fp) && encoder.Encode(obj) && encoder.buffer.Flush()) {
 					Py_RETURN_NONE;
 				}
 			}
@@ -113,8 +134,8 @@ namespace Yapic { namespace Json {
 		PyObject* parseFloat = NULL;
 		bool parseDate = true;
 
-		if (EXPECT_TRUE(PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOb", kwlist,
-			&input, &objectHook, &parseFloat, &parseDate))) {
+		IF_LIKELY (PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOb", kwlist,
+			&input, &objectHook, &parseFloat, &parseDate)) {
 
 			if (objectHook != NULL && !PyCallable_Check(objectHook)) {
 				PyErr_SetString(PyExc_TypeError, "argument 'object_hook' must be callable");

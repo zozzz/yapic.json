@@ -14,6 +14,11 @@ from yapic import json as yapic_json
 
 BENCHMARKS = []
 
+try:
+    import orjson
+except ImportError:
+    orjson = None
+
 
 class BenchmarkMeta(type):
     def __init__(self, name, bases, dict):
@@ -26,23 +31,24 @@ class Benchmark(metaclass=BenchmarkMeta):
     ITERATIONS = 1000
     ENSURE_ASCII = True
 
-    ENCODER = (
+    ENCODER = [
         ("yapic", yapic_json.dumps),
+        ("yapicb", yapic_json.dumpb),
         ("python", py_json.dumps),
         # ("simple", simplejson.dumps),
         ("ujson", ujson.dumps),
         ("rapidjson", rapidjson.dumps),
         ("metamagic", metamagic.json.dumps),
-    )
+    ]
 
-    DECODER = (
+    DECODER = [
         ("yapic", yapic_json.loads),
         ("python", py_json.loads),
         # ("simple", simplejson.loads),
         ("ujson", ujson.loads),
         ("rapidjson", rapidjson.loads),
         ("metamagic", metamagic.json.loads),
-    )
+    ]
 
     def get_encode_data(self):
         pass
@@ -110,12 +116,11 @@ class Benchmark(metaclass=BenchmarkMeta):
         for t in times:
             std_dev.append(pow(abs(t - mean), 2))
 
-        res = dict(
-            min=min_,
-            max=max_,
-            mean=mean,
-            call_sec=(Decimal(data["rounds"]) * Decimal(data["iterations"])) / sum_,
-            std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"]))))
+        res = dict(min=min_,
+                   max=max_,
+                   mean=mean,
+                   call_sec=(Decimal(data["rounds"]) * Decimal(data["iterations"])) / sum_,
+                   std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"]))))
         res["score"] = res["mean"]
         return res
 
@@ -316,3 +321,8 @@ class Table:
         sys.stdout.write(data)
         sys.stdout.flush()
         self.lineno += len(data.splitlines())
+
+
+if orjson:
+    Benchmark.ENCODER.append(("orjson", orjson.dumps))
+    Benchmark.DECODER.append(("orjson", orjson.loads))

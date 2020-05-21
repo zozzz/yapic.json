@@ -100,3 +100,4 @@ ENV/
 .vagrant
 .mypy_cache
 *.pdb
+*.asm

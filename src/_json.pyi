@@ -45,3 +45,23 @@ def dumps(obj: Any,
     :param encode_datetime: if ``True`` encode ``date`` / ``datetime`` / ``time``
         objects to string according to ISO 8601 format
     """
+
+
+def dumpb(obj: Any,
+          *,
+          default: Optional[Callable[[Any], JSONT]],
+          tojson: str = "__json__",
+          ensure_ascii: bool = True,
+          encode_datetime: bool = True) -> bytes:
+    """ Convert Python object to JSON bytes.
+
+
+    :param obj: python object which is need to convert to JSON
+    :param default: default function
+        for not supported python type serialization
+    :param tojson: method name which called on objects to get
+        serializable Python object
+    :param ensure_ascii: always return ASCII compatible string.
+    :param encode_datetime: if ``True`` encode ``date`` / ``datetime`` / ``time``
+        objects to string according to ISO 8601 format
+    """

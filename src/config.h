@@ -70,13 +70,30 @@
 #	define YapicLog(msg) printf(msg)
 #endif
 
-#if defined(__GNUC__) || defined(__clang__)
-#	define EXPECT_TRUE(x) __builtin_expect((x), 1)
-#	define EXPECT_FALSE(x) __builtin_expect((x), 0)
+#if defined(__has_cpp_attribute)
+#	if __has_cpp_attribute(likely)
+#		define YAPIC_LIKELY_ATTR [[likely]]
+#		define YAPIC_UNLIKELY_ATTR [[unlikely]]
+#	else
+#		define YAPIC_LIKELY_ATTR
+#		define YAPIC_UNLIKELY_ATTR
+#	endif
 #else
-#	define EXPECT_TRUE(x) (x) == 1
-#	define EXPECT_FALSE(x) (x) == 0
+#	define YAPIC_LIKELY_ATTR
+#	define YAPIC_UNLIKELY_ATTR
 #endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#	define LIKELY(x) __builtin_expect((x), 1)
+#	define UNLIKELY(x) __builtin_expect((x), 0)
+#else
+#	define LIKELY(x) (x)
+#	define UNLIKELY(x) (x)
+#endif
+
+#define IF_LIKELY(__cond) if (LIKELY((__cond))) YAPIC_LIKELY_ATTR
+#define IF_UNLIKELY(__cond) if (UNLIKELY((__cond))) YAPIC_UNLIKELY_ATTR
+
 
 #ifdef NDEBUG
 #	define YapicJson_Malloc   malloc

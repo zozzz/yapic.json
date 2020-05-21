@@ -31,7 +31,12 @@ def unicode_chars(request):
 def test_encode_chars(unicode_chars, ensure_ascii):
     for chc in unicode_chars:
         ch = chr(chc)
-        assert yapic_json.dumps(ch, ensure_ascii=ensure_ascii) == py_json.dumps(ch, ensure_ascii=ensure_ascii), chc
+        assert yapic_json.dumps(ch, ensure_ascii=ensure_ascii) \
+            == py_json.dumps(ch, ensure_ascii=ensure_ascii), chc
+
+        if not (chc >= 0xD800 and chc <= 0xDFFF):
+            assert yapic_json.dumpb(ch, ensure_ascii=ensure_ascii) \
+                == py_json.dumps(ch, ensure_ascii=ensure_ascii).encode("utf-8"), chc
 
 
 def test_decode_chars(unicode_chars, ensure_ascii):
@@ -78,6 +83,11 @@ def test_encode_string(value, ensure_ascii):
     pv = py_json.dumps(value, ensure_ascii=ensure_ascii)
     assert len(zv) == len(pv)
     assert zv == pv
+
+    yapic_bytes = yapic_json.dumpb(value, ensure_ascii=ensure_ascii)
+    python_bytes = py_json.dumps(value, ensure_ascii=ensure_ascii).encode("utf-8")
+    assert len(yapic_bytes) == len(python_bytes)
+    assert yapic_bytes == python_bytes
 
 
 @pytest.mark.parametrize(
@@ -230,4 +240,3 @@ def test_decode_invalid_utf8(value):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads(b'"' + value + b'"')
     ex.match("Invalid UTF-8 character")
-

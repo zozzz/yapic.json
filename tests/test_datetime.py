@@ -47,6 +47,7 @@ class MyTime(time):
      (datetime(2017, 4, 1, 12, 23, 45, 3, tzinfo=TZInfo(-5400)), '"2017-04-01T12:23:45.3-01:30"')])
 def test_datetime_encode(value, expected, ensure_ascii):
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii) == expected.encode("utf-8")
 
 
 def test_datetime_subclass_encode():

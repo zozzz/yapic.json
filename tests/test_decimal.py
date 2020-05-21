@@ -23,6 +23,7 @@ CASES = [
 @pytest.mark.parametrize("value,expected", CASES)
 def test_decimal_encode(value, expected, ensure_ascii):
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii) == expected.encode("utf-8")
 
 
 @pytest.mark.parametrize("expected,value", CASES)

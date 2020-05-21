@@ -56,6 +56,10 @@ def test_dict_encode(value, expected, ensure_ascii):
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
     assert yapic_json.dumps(value.items(), ensure_ascii=ensure_ascii) == expected
     assert yapic_json.dumps(ItemsView(value), ensure_ascii=ensure_ascii) == expected
+
+    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii) == expected.encode("utf-8")
+    assert yapic_json.dumpb(value.items(), ensure_ascii=ensure_ascii) == expected.encode("utf-8")
+    assert yapic_json.dumpb(ItemsView(value), ensure_ascii=ensure_ascii) == expected.encode("utf-8")
 # yapf: enable
 
 

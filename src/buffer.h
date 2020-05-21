@@ -35,7 +35,7 @@ namespace Yapic { namespace Json {
 	((__required) < (__buffer).end - (__buffer).cursor)
 
 #define MemoryBuffer_EnsureCapacity(__buffer, __required) \
-	(EXPECT_TRUE(MemoryBuffer_HasEnoughCapacity(__buffer, __required) || (__buffer).EnsureCapacity(__required)))
+	(LIKELY(MemoryBuffer_HasEnoughCapacity(__buffer, __required) || (__buffer).EnsureCapacity(__required)))
 
 
 template<typename T, Py_ssize_t SIZE>
@@ -44,12 +44,12 @@ class MemoryBuffer {
 		typedef T Char;
 		static constexpr Py_ssize_t InitialSize = SIZE;
 
-		T initial[SIZE];
 		T* start;
 		T* end;
 		T* cursor;
 		T maxchar;
 		bool is_heap;
+		T initial[SIZE];
 
 		inline explicit MemoryBuffer()
 			: start(initial), end(start + SIZE), cursor(initial),
@@ -104,7 +104,7 @@ class MemoryBuffer {
 		PyObject* NewString(T maxchar) {
 			Py_ssize_t l = cursor - start;
 			PyObject* str = PyUnicode_New(l, maxchar);
-			if (EXPECT_TRUE(str != NULL)) {
+			IF_LIKELY (str != NULL) {
 				switch (PyUnicode_KIND(str)) {
 					case PyUnicode_1BYTE_KIND:
 						CopyBytes(PyUnicode_1BYTE_DATA(str), start, l);
@@ -128,7 +128,7 @@ class MemoryBuffer {
 		}
 
 		bool AppendChar(T ch) {
-			if (EXPECT_TRUE(1 < end - cursor || EnsureCapacity(1))) {
+			IF_LIKELY (1 < end - cursor || EnsureCapacity(1)) {
 				*(cursor++) = ch;
 				return true;
 			} else {
@@ -138,7 +138,7 @@ class MemoryBuffer {
 
 		template<typename CT>
 		bool AppendSlice(CT *data, Py_ssize_t size) {
-			if (EXPECT_TRUE(size < end - cursor || EnsureCapacity(size))) {
+			IF_LIKELY (size < end - cursor || EnsureCapacity(size)) {
 				CopyBytes(cursor, data, size);
 				cursor += size;
 				return true;
@@ -147,6 +147,107 @@ class MemoryBuffer {
 			}
 		}
 };
+
+
+template<typename T, Py_ssize_t SIZE>
+class BytesBuffer {
+	public:
+		typedef T Char;
+		static constexpr Py_ssize_t InitialSize = SIZE;
+
+		T* start;
+		T* end;
+		T* cursor;
+		PyObject* bytes;
+		T maxchar;
+		T initial[SIZE];
+
+		inline explicit BytesBuffer()
+			: start(initial), end(start + SIZE), cursor(initial), bytes(NULL), maxchar(127) {
+		}
+
+		inline ~BytesBuffer() {
+			Py_CLEAR(bytes);
+		}
+
+		bool EnsureCapacity(Py_ssize_t required) {
+			Py_ssize_t current_usage = cursor - start;
+			Py_ssize_t new_size = end - start;
+			required += current_usage;
+
+#ifdef NDEBUG
+			do {
+				new_size <<= 1;
+			} while (required > new_size);
+#else
+			new_size = required; // allocate only the required size, for testing
+#endif
+
+			if (bytes != NULL) {
+				if (_PyBytes_Resize(&bytes, new_size) == -1) {
+					return false;
+				}
+				start = reinterpret_cast<T*>(PyBytes_AS_STRING(bytes));
+			} else {
+				bytes = PyBytes_FromStringAndSize(NULL, new_size);
+				if (bytes == NULL) {
+					return false;
+				}
+				start = reinterpret_cast<T*>(PyBytes_AS_STRING(bytes));
+				CopyBytes(start, initial, current_usage);
+			}
+
+			cursor = start + current_usage;
+			end = start + new_size;
+			return true;
+		}
+
+		inline PyObject* NewString() {
+			return NewString(0);
+		}
+
+		PyObject* NewString(T maxchar) {
+			if (bytes != NULL) {
+				if (_PyBytes_Resize(&bytes, cursor - start) == 0) {
+					PyObject* tmp = bytes;
+					bytes = NULL;
+					return tmp;
+				} else {
+					return NULL;
+				}
+			} else {
+				return PyBytes_FromStringAndSize((char*) initial, cursor - start);
+			}
+		}
+
+		inline void Reset() {
+			Py_CLEAR(bytes);
+			start = initial;
+			end = start + SIZE;
+			cursor = start;
+		}
+
+		bool AppendChar(T ch) {
+			IF_LIKELY (1 < end - cursor || EnsureCapacity(1)) {
+				*(cursor++) = ch;
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		template<typename CT>
+		bool AppendSlice(CT *data, Py_ssize_t size) {
+			IF_LIKELY (size < end - cursor || EnsureCapacity(size)) {
+				CopyBytes(cursor, data, size);
+				cursor += size;
+				return true;
+			} else {
+				return false;
+			}
+		}
+};
+
 
 
 template<typename T, size_t length>
@@ -190,7 +291,7 @@ class FileBuffer: public MemoryBuffer<T, length> {
 		}
 
 		bool EnsureCapacity(Py_ssize_t required) {
-			if (EXPECT_TRUE(Flush())) {
+			IF_LIKELY (Flush()) {
 				if (this->end - this->start < required) {
 					return Base::EnsureCapacity(required);
 				} else {

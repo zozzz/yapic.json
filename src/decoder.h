@@ -97,7 +97,7 @@ class StringReader {
 				if (*cursor == '"') {
 					goto success;
 				} else if (*cursor == '\\') {
-					if (EXPECT_TRUE(ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped))) {
+					IF_LIKELY (ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped)) {
 						maxchar |= escaped;
 						++cursor;
 					} else {
@@ -181,10 +181,10 @@ class BytesReader {
 			CHOUT tmp = 0;
 
 			while (cursor < inputEnd && MemoryBuffer_EnsureCapacity(buffer, 1)) {
-				if(BR_IS_UTF8_ASCII(*cursor)) {
-					if (*cursor == '"') {
+				if (BR_IS_UTF8_ASCII(*cursor)) {
+					IF_UNLIKELY (*cursor == '"') {
 						goto success;
-					} else if (*cursor == '\\') {
+					} else IF_UNLIKELY (*cursor == '\\') {
 						if (StringReader<CHIN, CHOUT, BUFF>::ReadEscapeSeq(cursor, inputStart, inputEnd, tmp)) {
 							maxchar |= (*(buffer.cursor++) = tmp);
 							cursor += 1;
@@ -194,7 +194,7 @@ class BytesReader {
 					} else {
 						*(buffer.cursor++) = *(cursor++);
 					}
-				} else if (EXPECT_TRUE(ReadChar(cursor, inputEnd, tmp))) {
+				} else IF_LIKELY (ReadChar(cursor, inputEnd, tmp)) {
 					maxchar |= (*(buffer.cursor++) = tmp);
 				} else {
 					return Decoder_Error(YapicJson_Err_UTF8Invalid);

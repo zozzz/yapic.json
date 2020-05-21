@@ -112,7 +112,7 @@ Functions
       >>> json.loads("1.2", parse_float=Decimal)
       Decimal('1.2')
 
--  `dumps <https://github.com/zozzz/yapic.json/blob/master/src/_json.pyi#L20>`_ (**obj:** ``Any``, ``*``, **default:** ``Callable[[Any], JSONT]=None``, **tojson:** ``str="__json__"``, **ensure_ascii:** ``bool=True``, **encode_datetime:** ``bool=True``)
+-  `dumps <https://github.com/zozzz/yapic.json/blob/master/src/_json.pyi#L20>`_ (**obj:** ``Any``, ``*``, **default:** ``Callable[[Any], JSONT]=None``, **tojson:** ``str="__json__"``, **ensure_ascii:** ``bool=True``, **encode_datetime:** ``bool=True``) -> ``str``
 
    **default example:**
 
@@ -140,6 +140,11 @@ Functions
       ...
       >>> json.dumps(Point(10, 20))
       '{"x":10,"y":20}'
+
+-  `dumpb <https://github.com/zozzz/yapic.json/blob/master/src/_json.pyi#L50>`_ (**obj:** ``Any``, ``*``, **default:** ``Callable[[Any], JSONT]=None``, **tojson:** ``str="__json__"``, **ensure_ascii:** ``bool=True``, **encode_datetime:** ``bool=True``) -> ``bytes``
+
+   Same as ``dumps``, but this function is return ``bytes`` insted of ``str``
+
 
 
 Exceptions

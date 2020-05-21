@@ -21,6 +21,7 @@ CASES = [
 def test_list_encode(value, ensure_ascii):
     expected = py_json.dumps(value, separators=(",", ":"), ensure_ascii=ensure_ascii)
     assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii) == expected.encode("utf-8")
 
 
 def test_list_encode_recursive(ensure_ascii):
