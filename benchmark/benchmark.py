@@ -177,16 +177,23 @@ class Benchmark(metaclass=BenchmarkMeta):
                     if skip_comparsion and lib_name != "yapic":
                         continue
 
+                    fn_kwargs = dict(kwargs)
+
                     if lib_name in ("simple", "python") and t is b.ENCODER:
-                        kwargs["default"] = b.default
-                    elif "default" in kwargs:
-                        del kwargs["default"]
+                        fn_kwargs["default"] = b.default
+                    elif "default" in fn_kwargs:
+                        del fn_kwargs["default"]
                     elif lib_name == "metamagic" and t is b.ENCODER:
-                        del kwargs["ensure_ascii"]
+                        del fn_kwargs["ensure_ascii"]
+                    elif lib_name == "orjson" and t is b.ENCODER:
+                        if fn_kwargs["ensure_ascii"]:
+                            continue
+                        else:
+                            del fn_kwargs["ensure_ascii"]
 
                     local_data = data[lib_name] = {"times": []}
                     table.write_row(lib_name, True, None)
-                    b.make_fn(lib_fn, args, kwargs)(local_data)
+                    b.make_fn(lib_fn, args, fn_kwargs)(local_data)
                     if "error" in local_data:
                         table.write_row(lib_name, False, local_data["error"])
                     else:

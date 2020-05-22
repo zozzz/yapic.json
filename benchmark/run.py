@@ -12,10 +12,16 @@ import json as py_json
 import simplejson
 import ujson
 import rapidjson
+import metamagic.json as metamagic_json
 from yapic import json as yapic_json
 
 from benchmark import Benchmark
 from datetime import datetime, tzinfo, timedelta
+
+try:
+    import orjson
+except ImportError:
+    orjson = None
 
 # TODO: pass default method as argument only if it is required
 
@@ -320,6 +326,7 @@ class ListOfFalse(Benchmark):
     """ List of false values """
 
     ITERATIONS = 100
+    ENSURE_ASCII = False
 
     def get_encode_data(self):
         return [False for i in range(10000, 10300)]
@@ -532,6 +539,7 @@ class TupleOfInts(Benchmark):
     """ Tuple of int values """
 
     ITERATIONS = 100
+    ENSURE_ASCII = False
 
     def get_encode_data(self):
         return tuple(range(10000, 10200))
@@ -575,7 +583,7 @@ class LargeDataToAscii(Benchmark):
 
     def get_encode_data(self):
         with codecs.open(path.join(path.dirname(__file__), "large-data.json"), "r", "utf-8") as f:
-            return py_json.load(f)
+            return yapic_json.loads(f.read())
 
 
 class LargeDataBytes(Benchmark):
@@ -595,6 +603,21 @@ class LargeDataToUnicode(LargeDataToAscii):
     ENSURE_ASCII = False
 
 
+class LargeDataToUnicodeBytes(LargeDataToAscii):
+    """ Large data -> Unicode bytes """
+
+    ENSURE_ASCII = False
+    DECODE = False
+    ENCODER = [
+        ("yapic", lambda *a, **kw: yapic_json.dumps(*a, **kw).encode("utf-8")),
+        ("yapicb", yapic_json.dumpb),
+        ("python", lambda *a, **kw: py_json.dumps(*a, **kw).encode("utf-8")),
+        ("ujson", lambda *a, **kw: ujson.dumps(*a, **kw).encode("utf-8")),
+        ("metamagic", lambda *a, **kw: metamagic_json.dumps(*a, **kw).encode("utf-8")),
+        ("rapidjson", lambda *a, **kw: rapidjson.dumps(*a, **kw).encode("utf-8")),
+    ] + ([("orjson", orjson.dumps)] if orjson else [])
+
+
 class LargeDataFormattedToAscii(LargeDataToAscii):
     """ Large formatted data -> Ascii """
 
@@ -606,7 +629,12 @@ class LargeDataFormattedToAscii(LargeDataToAscii):
 
 
 class ToFile:
-    ENCODER = (("yapic", yapic_json.dump), ("python", py_json.dump), ("simple", simplejson.dump), ("ujson", ujson.dump))
+    ENCODER = (
+        ("yapic", yapic_json.dump),
+        ("python", py_json.dump),
+        ("simple", simplejson.dump),
+        ("ujson", ujson.dump),
+    )
 
     DECODER = None
 
@@ -646,6 +674,17 @@ class MypyDataToAscii(Benchmark):
     """ Mypy data -> Ascii """
 
     ENSURE_ASCII = True
+    ITERATIONS = 10
+
+    def get_encode_data(self):
+        with codecs.open(path.join(path.dirname(__file__), "builtins.data.json"), "r", "utf-8") as f:
+            return py_json.load(f)
+
+
+class MypyDataToUnicode(Benchmark):
+    """ Mypy data -> Unicode """
+
+    ENSURE_ASCII = False
     ITERATIONS = 10
 
     def get_encode_data(self):

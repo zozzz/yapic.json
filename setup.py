@@ -26,7 +26,7 @@ if sys.platform == "win32":
         undef_macros.append("NDEBUG")
         extra_compile_args.append("/MTd")
         # extra_compile_args.append("/Zi")
-    # extra_compile_args.append("/FAs")
+    extra_compile_args.append("/FAs")
 else:
     extra_compile_args.append("-std=c++11")
     extra_compile_args.append("-Wno-unknown-pragmas")

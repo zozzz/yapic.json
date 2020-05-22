@@ -1,5 +1,7 @@
 import pytest
 import json as py_json
+from decimal import Decimal
+from datetime import datetime, date, time
 from uuid import UUID
 from collections.abc import ItemsView
 from yapic import json as yapic_json
@@ -48,6 +50,11 @@ large_dict = {
     ({100: 100}, '{"100":100}'),
     ({3.14: 3.14}, '{"3.14":3.14}'),
     ({UUID("f4aa36f7-254b-472d-9dc6-e030f244054a"): 1}, '{"f4aa36f7-254b-472d-9dc6-e030f244054a":1}'),
+    ({Decimal("4.2"): "OK"}, '{"4.2":"OK"}'),
+    # TODO:
+    # ({datetime(2000, 1, 1, 12, 34, 56): "OK"}, '{"2000-01-01 12:34:56":"OK"}'),
+    # ({date(2000, 1, 1): "OK"}, '{"2000-01-01":"OK"}'),
+    # ({time(12, 34, 56): "OK"}, '{"12:34:56":"OK"}'),
     (large_dict, py_json.dumps),
 ])
 def test_dict_encode(value, expected, ensure_ascii):

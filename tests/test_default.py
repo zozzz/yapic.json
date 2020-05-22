@@ -50,6 +50,20 @@ def test_default_encode_dict_key(ensure_ascii):
     assert yapic_json.dumps(x, ensure_ascii=ensure_ascii, default=default) == '{"loaded-later":42}'
 
 
+def test_default_encode_dict_key2(ensure_ascii):
+    class DeferredInt:
+        pass
+
+    def default(o):
+        if isinstance(o, DeferredInt):
+            return 123456
+
+    x = {}
+    x[DeferredInt()] = 42
+
+    assert yapic_json.dumps(x, ensure_ascii=ensure_ascii, default=default) == '{"123456":42}'
+
+
 def test_default_invalid_dict_key(ensure_ascii):
     class DeferredString:
         pass

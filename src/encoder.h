@@ -238,17 +238,12 @@ class Encoder {
 
 			for (;;) {
 				if ((ch = *input) < (EnsureAscii ? 127 : 128)) { // ASCII -> ASCII | UNICODE
-					IF_LIKELY (ch > 31) {
-						if (ch == '\\' || ch == '"') {
-							StringEncoder_AppendChar('\\');
-							StringEncoder_AppendChar(ch);
-						} else {
-							StringEncoder_AppendChar(ch);
-						}
-					} else if (__encode_escapes(out, ch, input, end)) {
-						buffer.cursor = --out;
-						buffer.maxchar = maxchar;
-						return;
+					IF_LIKELY (ch > 31 && ch != '\\' && ch != '"') {
+						StringEncoder_AppendChar(ch);
+					} else if (input >= end) {
+						break;
+					} else {
+						__encode_escapes(out, ch);
 					}
 				} else if (EnsureAscii) {
 					StringEncoder_AppendChar('\\');
@@ -302,10 +297,13 @@ class Encoder {
 				}
 				input += 1;
 			}
+
+			buffer.cursor = out;
+			buffer.maxchar = maxchar;
 		}
 
 		template<typename CHIN>
-		bool __encode_escapes(CHOUT *&out, CHIN &ch, const CHIN *input, const CHIN *end) {
+		bool __encode_escapes(CHOUT *&out, CHIN &ch) {
 			StringEncoder_AppendChar('\\');
 			switch (ch) {
 				case '\r': StringEncoder_AppendChar('r'); break;
@@ -313,10 +311,8 @@ class Encoder {
 				case '\t': StringEncoder_AppendChar('t'); break;
 				case '\b': StringEncoder_AppendChar('b'); break;
 				case '\f': StringEncoder_AppendChar('f'); break;
-				case 0:
-					if (input >= end) {
-						return true;
-					}
+				case '\\': StringEncoder_AppendChar('\\'); break;
+				case '"': StringEncoder_AppendChar('"'); break;
 				default:
 					StringEncoder_AppendChar('u');
 					StringEncoder_AppendChar('0');
