@@ -126,8 +126,20 @@ def test_datetime_decode_as_string(value):
 
 
 @pytest.mark.parametrize("value", [
-    '"2017-02-29"', '"2017-02-10 25:34:12"', '"25:34:12+1000"', '"22:34:12.11111111111"', '"22:34:12.11111111111+1000"'
+    '"2017-02-29"',
+    '"2017-02-10 25:34:12"',
+    '"25:34:12+1000"',
 ])
 def test_datetime_decode_invalid(value):
     with pytest.raises(ValueError):
         yapic_json.loads(value, parse_date=True)
+
+
+@pytest.mark.parametrize("value,expected", [
+    ('"2017-05-13 22:34:12.11111111111"', datetime(2017, 5, 13, 22, 34, 12, 111111)),
+    ('"2017-05-13 22:34:12.999999999999-01:00"', datetime(2017, 5, 13, 22, 34, 12, 999999, tzinfo=__tz(-3600))),
+    ('"22:34:12.11111111111"', time(22, 34, 12, 111111)),
+    ('"22:34:12.11111111111+1000"', time(22, 34, 12, 111111, tzinfo=__tz(36000))),
+])
+def test_datetime_decode_largems(value, expected):
+    assert yapic_json.loads(value, parse_date=True) == expected

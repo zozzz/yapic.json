@@ -424,10 +424,16 @@ class Decoder {
 
 			static inline bool ReadFraction(CHIN* cursor, CHIN** cursorOut, int* result) {
 				if (*(cursor++) == '.') {
+					CHIN* start = cursor;
 					if (Decoder_IsNumber(*cursor)) {
 						do {
 							*result = *result * 10 + (*(cursor++) - '0');
-						} while (Decoder_IsNumber(*cursor));
+						} while (Decoder_IsNumber(*cursor) && cursor - start < 6);
+
+						// eat all remaining numbers
+						while (Decoder_IsNumber(*cursor)) {
+							++cursor;
+						};
 						*cursorOut = cursor;
 						return true;
 					}
