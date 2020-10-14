@@ -82,15 +82,6 @@ _vars:
     tags: { only: /^\d+\.\d+\.\d+$/ }
 
 workflows:
-  x86-py35:
-    jobs:
-      - prepare:
-          exec: { name: x86, pyver: cp35-cp35m }
-      - release:
-          exec: { name: x64, pyver: cp38-cp38 }
-          requires: [prepare]
-          filters: *release-filter
-
   x86-py36:
     jobs:
       - prepare:
@@ -118,12 +109,12 @@ workflows:
           requires: [prepare]
           filters: *release-filter
 
-  x64-py35:
+  x86-py39:
     jobs:
       - prepare:
-          exec: { name: x64, pyver: cp35-cp35m }
+          exec: { name: x86, pyver: cp39-cp39 }
       - release:
-          exec: { name: x64, pyver: cp38-cp38 }
+          exec: { name: x64, pyver: cp39-cp39 }
           requires: [prepare]
           filters: *release-filter
 
@@ -151,6 +142,15 @@ workflows:
           exec: { name: x64, pyver: cp38-cp38 }
       - release:
           exec: { name: x64, pyver: cp38-cp38 }
+          requires: [prepare]
+          filters: *release-filter
+
+  x64-py39:
+    jobs:
+      - prepare:
+          exec: { name: x64, pyver: cp39-cp39 }
+      - release:
+          exec: { name: x64, pyver: cp39-cp39 }
           requires: [prepare]
           filters: *release-filter
       # - prepare:

@@ -3,9 +3,6 @@ image: Visual Studio 2017
 environment:
   matrix:
     - platform: x86
-      python: Python35
-
-    - platform: x86
       python: Python36
 
     - platform: x86
@@ -14,8 +11,8 @@ environment:
     - platform: x86
       python: Python38
 
-    - platform: x64
-      python: Python35-x64
+    - platform: x86
+      python: Python39
 
     - platform: x64
       python: Python36-x64
@@ -25,6 +22,9 @@ environment:
 
     - platform: x64
       python: Python38-x64
+
+    - platform: x64
+      python: Python39-x64
 
 install:
   - cmd: set PATH=C:\%python%;%PATH%
