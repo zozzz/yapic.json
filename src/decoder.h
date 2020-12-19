@@ -932,6 +932,8 @@ class Decoder {
 						break;
 					}
 				} else {
+					key = NULL;
+					value = NULL;
 					Decoder_DictError("\"");
 					break;
 				}

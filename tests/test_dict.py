@@ -70,6 +70,12 @@ def test_dict_encode(value, expected, ensure_ascii):
 # yapf: enable
 
 
+def test_dict_same_keys_encode(ensure_ascii):
+    data = [{"key": 1}, {"key": 2}, {"key": 3}, {"key": 4}, {"key": 5}]
+
+    print(yapic_json.dumps(data, ensure_ascii=ensure_ascii))
+
+
 def test_dict_recursive(ensure_ascii):
     d = dict(recursive=True)
     d["self"] = d
@@ -170,3 +176,15 @@ def test_dict_decode_invalid9():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('{:}')
     ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 1.")
+
+
+def test_dict_decode_invalid10():
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"id":0,}')
+    ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 8.")
+
+
+def test_dict_decode_invalid11():
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"x": true,')
+    ex.match("Unexpected end of data at position: 11.")
