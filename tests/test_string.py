@@ -65,11 +65,11 @@ def test_decode_chars(unicode_chars, ensure_ascii):
 @pytest.mark.parametrize(
     "value",
     [
-        ("A" * (64 * 100),),
-        ("Árvíztűrő tükörfúrógép",),
-        ("половину",),
-        ("половинуÁ𐌐𐌑𐌓 \r\nFsdf áésfak,sd opőfiunü39q35r78égp-vbfynkjsa.géélfhgpqa97gi3ztö" * 10,),
-        ("\r\n\t\b\f\\\"",)
+        "A" * (64 * 100),
+        "Árvíztűrő tükörfúrógép",
+        "половину",
+        "половинуÁ𐌐𐌑𐌓 \r\nFsdf áésfak,sd opőfiunü39q35r78égp-vbfynkjsa.géélfhgpqa97gi3ztö" * 10,
+        "\r\n\t\b\f\\\""
     ],
     ids=[
         "Long ASCII (64000 char)",
@@ -116,8 +116,12 @@ def test_decode_string(value, ensure_ascii):
     expected = value
     value = py_json.dumps(value, ensure_ascii=True)
     assert yapic_json.loads(value) == expected
+
     bytes_value = value.encode("utf-8")
     assert yapic_json.loads(bytes_value) == py_json.loads(value)
+
+    bytearray_value = bytearray(value, "utf-8")
+    assert yapic_json.loads(bytearray_value) == yapic_json.loads(value)
 
 
 def test_decode_invalid_input():

@@ -35,6 +35,12 @@
 	return decoder.Decode(); \
 	}
 
+#define __decode_bytearray(T) { \
+	BytesDecoder<T, Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder((T*) PyByteArray_AS_STRING(input), PyByteArray_GET_SIZE(input)); \
+	__decoder_options \
+	return decoder.Decode(); \
+	}
+
 
 namespace Yapic { namespace Json {
 
@@ -165,8 +171,10 @@ namespace Yapic { namespace Json {
 				}
 			} else if (PyBytes_Check(input)) {
 				__decode_bytes(Py_UCS1);
+			} else if (PyByteArray_Check(input)) {
+				__decode_bytearray(Py_UCS1);
 			} else {
-				PyErr_SetString(PyExc_TypeError, "argument 1 must be str or bytes");
+				PyErr_SetString(PyExc_TypeError, "argument 1 must be str or bytes or bytearray");
 			}
 		}
 
