@@ -188,3 +188,9 @@ def test_dict_decode_invalid11():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('{"x": true,')
     ex.match("Unexpected end of data at position: 11.")
+
+
+def test_dict_decode_invalid12():
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{1:1}')
+    ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 1.")
