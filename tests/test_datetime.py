@@ -131,8 +131,11 @@ def test_datetime_decode_as_string(value):
     '"25:34:12+1000"',
 ])
 def test_datetime_decode_invalid(value):
-    with pytest.raises(ValueError):
-        yapic_json.loads(value, parse_date=True)
+    # TODO: strict parsing https://github.com/zozzz/yapic.json/issues/10
+    # with pytest.raises(ValueError):
+    #     yapic_json.loads(value, parse_date=True)
+
+    assert yapic_json.loads(value, parse_date=True) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("value,expected", [

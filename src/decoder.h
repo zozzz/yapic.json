@@ -318,7 +318,13 @@ class Decoder {
 			PyObject* tmp = NULL;
 
 			if (parseDate && __read_date(cursor, cursorOut, &tmp)) {
-				return tmp;
+				// when parsed invalid date like string, eg: 8922-00-01
+				// just continue string parsing
+				if (tmp == NULL && PyErr_Occurred()) {
+					PyErr_Clear();
+				} else {
+					return tmp;
+				}
 			}
 
 			if (sizeof(CHIN) == 1) {
