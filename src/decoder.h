@@ -431,15 +431,16 @@ class Decoder {
 			static inline bool ReadFraction(CHIN* cursor, CHIN** cursorOut, int* result) {
 				if (*(cursor++) == '.') {
 					CHIN* start = cursor;
+					int factor = 100000;
 					if (Decoder_IsNumber(*cursor)) {
 						do {
-							*result = *result * 10 + (*(cursor++) - '0');
-						} while (Decoder_IsNumber(*cursor) && cursor - start < 6);
-
-						// eat all remaining numbers
-						while (Decoder_IsNumber(*cursor)) {
+							if (factor > 0) {
+								*result = *result + (*(cursor) - '0') * factor;
+								factor = factor / 10;
+							}
 							++cursor;
-						};
+						} while (Decoder_IsNumber(*cursor));
+
 						*cursorOut = cursor;
 						return true;
 					}
