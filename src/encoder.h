@@ -409,15 +409,13 @@ class Encoder {
 			{ \
 				ms_size = value; \
 				CHOUT *end_position = buffer.cursor + EncodeDT_MILIS_MAX_LENGTH; \
-				CHOUT *saved_end_position = end_position; \
 				CHOUT digit; \
 				do { \
 					digit = (48 + (ms_size % 10)); \
-					if (digit != '0' || end_position != saved_end_position) { \
-						*(--end_position) = digit; \
-					} \
-				} while ((ms_size /= 10) > 0); \
-				ms_size = saved_end_position - end_position; \
+					*(--end_position) = digit; \
+					ms_size /= 10; \
+				} while (end_position > buffer.cursor); \
+				ms_size = EncodeDT_MILIS_MAX_LENGTH; \
 				memmove(buffer.cursor, end_position, sizeof(CHOUT) * ms_size); \
 				buffer.cursor += ms_size; \
 			}
