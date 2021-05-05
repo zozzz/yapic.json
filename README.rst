@@ -53,6 +53,10 @@ Requirements
 - c++ 11 comaptible compiler. *(only if u want to build from source)*
 
   Wheels provided for *windows x86/x64* and *linux x86/x64* and *osx x64*
+- On Windows you maybe need to install `Microsoft Visual C++ Redistributable <https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0>`_
+
+Windows
+~~~~~~~
 
 
 Usage
