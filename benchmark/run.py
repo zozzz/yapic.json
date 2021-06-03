@@ -4,6 +4,7 @@ from os import path
 from io import StringIO
 from datetime import timezone, timedelta
 from collections.abc import ItemsView
+from enum import IntEnum, Enum
 import math
 import decimal
 import codecs
@@ -533,6 +534,17 @@ class ListOfBytesMixed(Benchmark):
                 "utf-8")
             res.append(b'"' + data + b'"')
         return b"[" + b",".join(res) + b"]"
+
+
+class ListOfIntEnum(Benchmark):
+    """ List of IntEnum """
+    DECODER = None
+
+    def get_encode_data(self):
+        class _IntEnum(IntEnum):
+            v1 = 1
+
+        return [_IntEnum.v1] * 100
 
 
 class TupleOfInts(Benchmark):

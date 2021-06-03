@@ -98,8 +98,6 @@ class Encoder {
 				return EncodeDate(obj);
 			} else if (PyTime_Check(obj)) {
 				return EncodeTime(obj);
-			} else if (PyLong_CheckExact(obj)) {
-				return EncodeLong(obj);
 			} else if (PyFloat_CheckExact(obj)) {
 				return EncodeFloat(obj);
 			} else if (obj == Py_True) {
@@ -124,6 +122,8 @@ class Encoder {
 				Encoder_AppendFast('l');
 				Encoder_AppendFast('l');
 				Encoder_RETURN_TRUE;
+			} else if (PyLong_Check(obj)) {
+				return EncodeLong(obj);
 			} else if (PyAnySet_Check(obj)) {
 				return EncodeIterable(obj);
 			} else if (PyObject_HasAttr(obj, toJsonMethodName)) {
@@ -559,11 +559,14 @@ class Encoder {
 		Encoder_FN(EncodeEnum) {
 			PyObject* value = PyObject_GetAttr(obj, Module::State()->STR_VALUE);
 			if (value != NULL) {
+				bool res;
 				if (isDictKey) {
-					return __encode_dict_key(value);
+					res = __encode_dict_key(value);
 				} else {
-					return Encode(value);
+					res = Encode(value);
 				}
+				Py_DECREF(value);
+				return res;
 			} else {
 				Encoder_RETURN_FALSE;
 			}
