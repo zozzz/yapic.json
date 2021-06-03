@@ -17,13 +17,15 @@ public:
 	ModuleRef PyTimezone;
 	ModuleRef ItemsView;
 	ModuleRef Decimal;
-	ModuleVar PyUTCTimezone;
 	ModuleRef UUID;
+	ModuleRef Enum;
+	ModuleVar PyUTCTimezone;
 
 	ModuleVar STR_TZINFO;
 	ModuleVar STR_UTCOFFSET;
 	ModuleVar STR_WRITE;
 	ModuleVar STR_TOJSON;
+	ModuleVar STR_VALUE;
 	ModuleVar __version__;
 
 	ModuleExc Error;
@@ -36,13 +38,15 @@ public:
 		state->PyTimezone.Import("datetime", "timezone");
 		state->ItemsView.Import("collections.abc", "ItemsView");
 		state->Decimal.Import("decimal", "Decimal");
-		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
 		state->UUID.Import("uuid", "UUID");
+		state->Enum.Import("enum", "Enum");
+		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
 
 		state->STR_TZINFO = "tzinfo";
 		state->STR_UTCOFFSET = "utcoffset";
 		state->STR_WRITE = "write";
 		state->STR_TOJSON = "__json__";
+		state->STR_VALUE = "value";
 		state->__version__.Value(YAPIC_JSON_VERSION_STR).Export("__version__");
 
 		state->Error.Define("JsonError");

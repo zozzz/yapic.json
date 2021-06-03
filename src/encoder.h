@@ -130,7 +130,9 @@ class Encoder {
 				return EncodeWithJsonMethod<false>(obj);
 			} else if (PyObject_IsInstance(obj, Module::State()->ItemsView)) {
 				return EncodeItemsView(obj);
-			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
+			} else if (Module::State()->Enum.Check(obj)) {
+				return EncodeEnum<false>(obj);
+			} else if (Module::State()->UUID.Check(obj)) {
 				Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
 				Encoder_AppendFast('"');
 				IF_LIKELY (EncodeUUID(obj)) {
@@ -187,7 +189,9 @@ class Encoder {
 				return EncodeWithDefault<true>(obj);
 			} else if (Module::State()->Decimal.CheckExact(obj)) {
 				return EncodeDecimal(obj);
-			} else if (PyObject_IsInstance(obj, Module::State()->UUID)) {
+			} else if (Module::State()->Enum.Check(obj)) {
+				return EncodeEnum<true>(obj);
+			} else if (Module::State()->UUID.Check(obj)) {
 				return EncodeUUID(obj);
 			}
 
@@ -549,6 +553,20 @@ class Encoder {
 			Encoder_AppendFast('"');
 
 			Encoder_RETURN_TRUE;
+		}
+
+		template<bool isDictKey>
+		Encoder_FN(EncodeEnum) {
+			PyObject* value = PyObject_GetAttr(obj, Module::State()->STR_VALUE);
+			if (value != NULL) {
+				if (isDictKey) {
+					return __encode_dict_key(value);
+				} else {
+					return Encode(value);
+				}
+			} else {
+				Encoder_RETURN_FALSE;
+			}
 		}
 
 		Encoder_FN(EncodeUUID) {
