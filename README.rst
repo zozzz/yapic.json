@@ -1,19 +1,16 @@
 yapic.json
 ===========
 
-.. image:: https://img.shields.io/appveyor/ci/zozzz/yapic-json/release.svg?label=windows&style=flat-square
-      :alt: AppVeyor
-      :target: https://ci.appveyor.com/project/zozzz/yapic-json
+.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-linux.yml/badge.svg?branch=release
+      :alt: linux
 
-.. image:: https://img.shields.io/circleci/project/github/zozzz/yapic.json/release.svg?label=linux&style=flat-square
-      :alt: CircleCI
-      :target: https://circleci.com/gh/zozzz/yapic.json
+.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-macos.yml/badge.svg?branch=release
+      :alt: macos
 
-.. image:: https://img.shields.io/travis/com/zozzz/yapic.json/release.svg?label=osx&style=flat-square
-      :alt: Travis
-      :target: https://travis-ci.com/zozzz/yapic.json
+.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-windows.yml/badge.svg?branch=release
+      :alt: windows
 
-.. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat-square
+.. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat
       :alt: PyPI - Downloads
       :target: https://pypi.org/project/yapic.json/
 
