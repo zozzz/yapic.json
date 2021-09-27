@@ -43,13 +43,15 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install twine
 
+      - name: build sdist
+        run: |
+          python3 setup.py sdist
+          mv dist sdist
+
       - name: build wheel
         uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2010_x86_64
         with:
           python-versions: cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39
-
-      - name: build sdist
-        run: python3 setup.py sdist
 
       - name: deploy
         env:
@@ -57,4 +59,4 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           python3 -m twine upload --skip-existing dist/*-manylinux*.whl
-          python3 -m twine upload --skip-existing dist/*.tar.gz
+          python3 -m twine upload --skip-existing sdist/*.tar.gz

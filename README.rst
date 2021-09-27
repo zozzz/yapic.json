@@ -1,16 +1,16 @@
 yapic.json
 ===========
 
-.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-linux.yml/badge.svg?branch=release
-      :alt: linux
+.. image:: https://img.shields.io/github/workflow/status/zozzz/yapic.json/linux/release?label=linux&style=flat-square
+      :alt: GitHub Workflow Status
       :target: https://github.com/zozzz/yapic.json
 
-.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-macos.yml/badge.svg?branch=release
-      :alt: macos
+.. image:: https://img.shields.io/github/workflow/status/zozzz/yapic.json/windows/release?label=windows&style=flat-square
+      :alt: GitHub Workflow Status
       :target: https://github.com/zozzz/yapic.json
 
-.. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-windows.yml/badge.svg?branch=release
-      :alt: windows
+.. image:: https://img.shields.io/github/workflow/status/zozzz/yapic.json/macos/release?label=macos&style=flat-square
+      :alt: GitHub Workflow Status
       :target: https://github.com/zozzz/yapic.json
 
 .. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat
