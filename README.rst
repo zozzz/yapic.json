@@ -3,12 +3,15 @@ yapic.json
 
 .. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-linux.yml/badge.svg?branch=release
       :alt: linux
+      :target: https://github.com/zozzz/yapic.json
 
 .. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-macos.yml/badge.svg?branch=release
       :alt: macos
+      :target: https://github.com/zozzz/yapic.json
 
 .. image:: https://github.com/zozzz/yapic.json/actions/workflows/release-windows.yml/badge.svg?branch=release
       :alt: windows
+      :target: https://github.com/zozzz/yapic.json
 
 .. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat
       :alt: PyPI - Downloads
