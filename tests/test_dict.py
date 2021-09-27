@@ -175,13 +175,13 @@ def test_dict_decode_invalid8():
 def test_dict_decode_invalid9():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('{:}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 1.")
+    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 1.")
 
 
 def test_dict_decode_invalid10():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('{"id":0,}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 8.")
+    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 8.")
 
 
 def test_dict_decode_invalid11():
@@ -193,4 +193,10 @@ def test_dict_decode_invalid11():
 def test_dict_decode_invalid12():
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
         yapic_json.loads('{1:1}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of \" at position: 1.")
+    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 1.")
+
+
+def test_dict_decode_invalid13():
+    with pytest.raises(yapic_json.JsonDecodeError) as ex:
+        yapic_json.loads('{"foo":"bar","baz')
+    ex.match("Unexpected end of data at position: 17.")

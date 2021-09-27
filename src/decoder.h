@@ -21,7 +21,7 @@
 	inline PyObject* name(CHIN* cursor, CHIN** cursorOut)
 
 #define Decoder_IsWhiteSpace(ch) \
-	((ch) == ' ' || ((ch) <= '\n' && (ch) >= '\t') || (ch) == '\r')
+	((ch) == ' ' || (ch) == '\t' || (ch) == '\n' || (ch) == '\r')
 
 #define Decoder_EatWhiteSpace(cursor) \
 	while (Decoder_IsWhiteSpace(*(cursor))) { ++(cursor); }
@@ -902,7 +902,9 @@ class Decoder {
 							if ((value = ReadValue(cursor, &cursor))) {
 								if (PyDict_SetItem(dict, key, value) == 0) {
 									Py_DECREF(key);
+									key = NULL;
 									Py_DECREF(value);
+									value = NULL;
 									Decoder_EatWhiteSpace(cursor);
 									if (*cursor == ',') {
 										++cursor;
@@ -918,9 +920,6 @@ class Decoder {
 
 										return dict;
 									} else {
-										// decrefed above
-										key = NULL;
-										value = NULL;
 										Decoder_DictError("',', '}'");
 										break;
 									}
@@ -939,9 +938,7 @@ class Decoder {
 						break;
 					}
 				} else {
-					key = NULL;
-					value = NULL;
-					Decoder_DictError("\"");
+					Decoder_DictError("'\"'");
 					break;
 				}
 			}
