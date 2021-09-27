@@ -1,0 +1,45 @@
+name: windows
+
+on:
+  push:
+    branches: [release]
+
+jobs:
+  deploy:
+    runs-on: ${{ matrix.os }}
+    name: release ${{ matrix.arch }} python-${{ matrix.python-version }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        os: [windows-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        arch: [x64, x86]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.arch }}
+
+      - name: install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest twine pytest wheel
+
+      - name: build
+        run: python setup.py bdist_wheel
+
+      - name: run tests
+        run: |
+          python -m pip install --upgrade $(Get-Childitem –Path dist -Include *.whl -File -Recurse)
+          python -m pytest -q -x tests
+
+      - name: deploy
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 -m twine upload --skip-existing dist/*.whl

@@ -1,0 +1,56 @@
+name: macos
+
+on:
+  push:
+    branches: [release]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    name: test python:${{ matrix.python-version }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        os: [macos-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: install deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pytest
+
+      - name: run tests
+        run: python3 setup.py test -f tests -a "-q -x"
+
+  release:
+    runs-on: macos-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: install deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install twine cibuildwheel
+
+      - name: build
+        env:
+          CIBW_BUILD: cp3?-*
+        run: python3 -m cibuildwheel --output-dir wheelhouse
+
+      - name: deploy
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 -m twine upload --skip-existing wheelhouse/*.whl
