@@ -13,7 +13,7 @@ yapic.json
       :alt: GitHub Workflow Status
       :target: https://github.com/zozzz/yapic.json
 
-.. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat
+.. image:: https://img.shields.io/pypi/dm/yapic.json.svg?style=flat-square
       :alt: PyPI - Downloads
       :target: https://pypi.org/project/yapic.json/
 
