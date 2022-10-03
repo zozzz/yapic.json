@@ -156,7 +156,7 @@ Exceptions
 
 .. code-block:: python
 
-   from json import JSONDecodeError
+   import json as py_json
 
    class JsonError(ValueError):
       """Base exception for all json errors"""
@@ -164,7 +164,7 @@ Exceptions
    class JsonEncodeError(JsonError):
       """Exception for encoding errors"""
 
-   class JsonDecodeError(JsonError, JSONDecodeError):
+   class JsonDecodeError(JsonError, py_json.JSONDecodeError):
       """Exception for decoding errors
 
       Can match python builtin ``json.JSONDecodeError``.
