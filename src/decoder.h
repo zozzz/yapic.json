@@ -11,11 +11,9 @@
 #undef min
 #undef max
 
-#define Decoder_Error(msg) \
-	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", cursor - inputStart)
+// #define YapicJson_REPR(o) (((PyObject*)o) == NULL ? "<NULL>" : ((char*) PyUnicode_DATA(PyObject_ASCII(((PyObject*)o)))))
+// #define YapicJson_DUMP(o) printf(#o " = %s\n", YapicJson_REPR(o))
 
-#define Decoder_ErrorFormat(msg, ...) \
-	PyErr_Format(Module::State()->DecodeError, msg " at position: %ld.", __VA_ARGS__, cursor - inputStart)
 
 #define Decoder_FN(name) \
 	inline PyObject* name(CHIN* cursor, CHIN** cursorOut)
@@ -59,6 +57,58 @@ using namespace double_conversion;
 
 #include "str_decode_table.h"
 
+
+PyObject* _set_decoder_error(const char* err_msg, PyObject* input, Py_ssize_t pos) {
+	PyObject* args = PyTuple_New(3);
+	if (args == NULL) {
+		return NULL;
+	}
+
+	PyObject* msg = PyUnicode_FromStringAndSize(err_msg, strlen(err_msg));
+	if (msg == NULL) {
+		Py_DECREF(args);
+		return NULL;
+	} else {
+		PyTuple_SET_ITEM(args, 0, msg);
+	}
+
+	if (!PyUnicode_Check(input)) {
+		PyObject* encoded = PyUnicode_FromEncodedObject(input, "utf8", "surrogateescape");
+		if (encoded == NULL) {
+			Py_DECREF(args);
+			return NULL;
+		} else {
+			PyTuple_SET_ITEM(args, 1, encoded);
+		}
+	} else {
+		Py_INCREF(input);
+		PyTuple_SET_ITEM(args, 1, input);
+	}
+
+	PyObject* pypos = PyLong_FromSsize_t(pos);
+	if (pypos == NULL) {
+		Py_DECREF(args);
+		return NULL;
+	} else {
+		PyTuple_SET_ITEM(args, 2, pypos);
+	}
+
+	PyObject* cls = Module::State()->DecodeError;
+	PyObject* exc = PyObject_CallObject(cls, args);
+	Py_DECREF(args);
+
+	if (exc != NULL) {
+		PyErr_SetObject(cls, exc);
+	}
+
+	return NULL;
+}
+
+
+#define Decoder_Error(msg) \
+	_set_decoder_error(msg, input.original, cursor - input.begin)
+
+
 #define ReadUnicodeEscapePart(output) \
 	++cursor; \
 	if (*cursor >= '0' && *cursor <= '9')  { \
@@ -86,18 +136,20 @@ using namespace double_conversion;
 #define BR_IS_UTF8_CONT(ch) ((ch) >= 0x80 && (ch) < 0xC0)
 
 
-template<typename CHIN, typename CHOUT, typename BUFF>
+template<typename INP, typename CHOUT, typename BUFF>
 class StringReader {
 	public:
-		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
+		using CHIN = typename INP::CHIN;
+
+		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, INP &input, BUFF &buffer) {
 			CHOUT maxchar = 127;
 			CHOUT escaped;
 
-			while (cursor < inputEnd) {
+			while (cursor < input.end) {
 				if (*cursor == '"') {
 					goto success;
 				} else if (*cursor == '\\') {
-					IF_LIKELY (ReadEscapeSeq(cursor, inputStart, inputEnd, escaped) && buffer.AppendChar(escaped)) {
+					IF_LIKELY (ReadEscapeSeq(cursor, input, escaped) && buffer.AppendChar(escaped)) {
 						maxchar |= escaped;
 						++cursor;
 					} else {
@@ -108,7 +160,7 @@ class StringReader {
 
 					do {
 						maxchar |= *cursor;
-					} while (++cursor < inputEnd && *cursor != '\\' && *cursor != '"');
+					} while (++cursor < input.end && *cursor != '\\' && *cursor != '"');
 
 					if (!buffer.AppendSlice(sliceBegin, cursor - sliceBegin)) {
 						return NULL;
@@ -124,7 +176,7 @@ class StringReader {
 				return buffer.NewString(maxchar);
 		}
 
-		static inline bool ReadEscapeSeq(CHIN *&cursor, const CHIN * const inputStart, const CHIN * const inputEnd, CHOUT &result) {
+		static inline bool ReadEscapeSeq(CHIN *&cursor, INP &input, CHOUT &result) {
 			switch (*(++cursor)) {
 				case 'b': result = '\b'; break;
 				case 'f': result = '\f'; break;
@@ -173,19 +225,21 @@ class StringReader {
 		}
 };
 
-template<typename CHIN, typename CHOUT, typename BUFF>
+template<class INP, typename CHOUT, typename BUFF>
 class BytesReader {
 	public:
-		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, const CHIN * const inputStart, const CHIN * const inputEnd, BUFF &buffer) {
+		using CHIN = typename INP::CHIN;
+
+		static inline PyObject* Read(CHIN *&cursor, CHIN **cursorOut, INP &input, BUFF &buffer) {
 			CHOUT maxchar = 127;
 			CHOUT tmp = 0;
 
-			while (cursor < inputEnd && MemoryBuffer_EnsureCapacity(buffer, 1)) {
+			while (cursor < input.end && MemoryBuffer_EnsureCapacity(buffer, 1)) {
 				if (BR_IS_UTF8_ASCII(*cursor)) {
 					IF_UNLIKELY (*cursor == '"') {
 						goto success;
 					} else IF_UNLIKELY (*cursor == '\\') {
-						if (StringReader<CHIN, CHOUT, BUFF>::ReadEscapeSeq(cursor, inputStart, inputEnd, tmp)) {
+						if (StringReader<INP, CHOUT, BUFF>::ReadEscapeSeq(cursor, input, tmp)) {
 							maxchar |= (*(buffer.cursor++) = tmp);
 							cursor += 1;
 						} else {
@@ -194,7 +248,7 @@ class BytesReader {
 					} else {
 						*(buffer.cursor++) = *(cursor++);
 					}
-				} else IF_LIKELY (ReadChar(cursor, inputEnd, tmp)) {
+				} else IF_LIKELY (ReadChar(cursor, tmp)) {
 					maxchar |= (*(buffer.cursor++) = tmp);
 				} else {
 					return Decoder_Error(YapicJson_Err_UTF8Invalid);
@@ -207,7 +261,7 @@ class BytesReader {
 				return buffer.NewString(maxchar);
 		}
 
-		static inline bool ReadChar(CHIN *&cursor, const CHIN * const inputEnd, CHOUT &result) {
+		static inline bool ReadChar(CHIN *&cursor, CHOUT &result) {
 			if (*cursor < 0xC0) {
 				return false;
 			} else if (BR_IS_UTF8_LENGTH_2(*cursor)
@@ -251,29 +305,63 @@ class BytesReader {
 };
 
 
-template<typename CHIN, typename CHOUT, typename BUFFER, typename READER>
+template<typename _CHIN>
+class Input {
+	public:
+		using CHIN = _CHIN;
+
+		CHIN* begin;
+		CHIN* end;
+		PyObject* original;
+
+		Input(CHIN * data, Py_ssize_t len, PyObject* obj): begin(data), end(data + len), original(obj) { }
+};
+
+
+template<typename CHIN>
+class UnicodeInput: public Input<CHIN> {
+	public:
+		UnicodeInput(PyObject* input)
+			: Input<CHIN>((CHIN*) PyUnicode_DATA(input), PyUnicode_GET_LENGTH(input), input) { }
+};
+
+
+class BytesInput: public Input<Py_UCS1> {
+	public:
+		BytesInput(PyObject* input)
+			: Input<Py_UCS1>((Py_UCS1*) PyBytes_AS_STRING(input), PyBytes_GET_SIZE(input), input) { }
+};
+
+
+class ByteArrayInput: public Input<Py_UCS1> {
+	public:
+		ByteArrayInput(PyObject* input)
+			: Input<Py_UCS1>((Py_UCS1*) PyByteArray_AS_STRING(input), PyByteArray_GET_SIZE(input), input) {
+		}
+};
+
+
+template<typename INP, typename CHOUT, typename BUFFER, typename READER>
 class Decoder {
 	public:
-		CHIN* inputStart;
-		CHIN* inputEnd;
+		using CHIN = typename INP::CHIN;
+		INP input;
 
 		PyObject* objectHook;
 		PyObject* parseFloat;
 		bool parseDate;
 		BUFFER strBuffer;
 
-		inline Decoder(CHIN* data, size_t length)
-			: inputStart(data), inputEnd(data + length) {
-		}
+		inline Decoder(PyObject* obj) : input(obj) { }
 
 		inline PyObject* Decode() {
-			CHIN* end = NULL;
-			PyObject* result = ReadValue(inputStart, &end);
+			CHIN* cursor = NULL;
+			PyObject* result = ReadValue(input.begin, &cursor);
 			if (result != NULL) {
-				Decoder_EatWhiteSpace(end);
-				if (end != inputEnd) {
+				Decoder_EatWhiteSpace(cursor);
+				if (cursor != input.end) {
 					Py_DECREF(result);
-					PyErr_Format(Module::State()->DecodeError, YapicJson_Err_JunkTrailingData " at position: %ld.", end - inputStart);
+					Decoder_Error(YapicJson_Err_JunkTrailingData);
 					return NULL;
 				}
 			}
@@ -341,12 +429,12 @@ class Decoder {
 				strBuffer.Reset();
 			}
 
-			return READER::Read(cursor, cursorOut, inputStart, inputEnd, strBuffer);
+			return READER::Read(cursor, cursorOut, input, strBuffer);
 		}
 
 		inline bool __read_ascii(CHIN* cursor, CHIN **cursorOut, PyObject *&result) {
 			CHIN *begin = cursor;
-			while (str_state_table[*cursor] == STR_ASCII && cursor < inputEnd) {
+			while (str_state_table[*cursor] == STR_ASCII && cursor < input.end) {
 				++cursor;
 			}
 
@@ -722,10 +810,10 @@ class Decoder {
 			} else if (__read_nan(cursor, cursorOut)) {
 				Py_RETURN_NAN;
 			} else {
-				if (cursor >= inputEnd) {
+				if (cursor >= input.end) {
 					Decoder_Error(YapicJson_Err_UnexpectedEnd);
 				} else {
-					return Decoder_ErrorFormat(YapicJson_Err_UnexpectedChar, *cursor);
+					return Decoder_Error(YapicJson_Err_UnexpectedCharInNumber);
 				}
 				return NULL;
 			}
@@ -984,10 +1072,13 @@ class Decoder {
 
 
 template<typename CHIN, typename CHOUT>
-using StrDecoder = Decoder<CHIN, CHOUT, ChunkBuffer, StringReader<CHIN, CHOUT, ChunkBuffer>>;
+using UnicodeDecoder = Decoder<UnicodeInput<CHIN>, CHOUT, ChunkBuffer, StringReader<UnicodeInput<CHIN>, CHOUT, ChunkBuffer>>;
 
-template<typename CHIN, typename CHOUT, Py_ssize_t BSIZE>
-using BytesDecoder = Decoder<CHIN, CHOUT, MemoryBuffer<CHOUT, BSIZE>, BytesReader<CHIN, CHOUT, MemoryBuffer<CHOUT, BSIZE>>>;
+template<typename CHOUT, Py_ssize_t BSIZE>
+using BytesDecoder = Decoder<BytesInput, CHOUT, MemoryBuffer<CHOUT, BSIZE>, BytesReader<BytesInput, CHOUT, MemoryBuffer<CHOUT, BSIZE>>>;
+
+template<typename CHOUT, Py_ssize_t BSIZE>
+using ByteArrayDecoder = Decoder<ByteArrayInput, CHOUT, MemoryBuffer<CHOUT, BSIZE>, BytesReader<ByteArrayInput, CHOUT, MemoryBuffer<CHOUT, BSIZE>>>;
 
 
 } /* end namespace Json */

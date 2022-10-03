@@ -24,19 +24,19 @@
 	decoder.parseDate = parseDate;
 
 #define __decode_str(T) { \
-	StrDecoder<T, Py_UCS4> decoder((T*) PyUnicode_DATA(input), PyUnicode_GET_LENGTH(input)); \
+	UnicodeDecoder<T, Py_UCS4> decoder(input); \
 	__decoder_options \
 	return decoder.Decode(); \
 	}
 
-#define __decode_bytes(T) { \
-	BytesDecoder<T, Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder((T*) PyBytes_AS_STRING(input), PyBytes_GET_SIZE(input)); \
+#define __decode_bytes() { \
+	BytesDecoder<Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder(input); \
 	__decoder_options \
 	return decoder.Decode(); \
 	}
 
-#define __decode_bytearray(T) { \
-	BytesDecoder<T, Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder((T*) PyByteArray_AS_STRING(input), PyByteArray_GET_SIZE(input)); \
+#define __decode_bytearray() { \
+	ByteArrayDecoder<Py_UCS4, YAPIC_JSON_BYTES_DECODER_BUFFER_SIZE> decoder(input); \
 	__decoder_options \
 	return decoder.Decode(); \
 	}
@@ -170,9 +170,9 @@ namespace Yapic { namespace Json {
 					break;
 				}
 			} else if (PyBytes_Check(input)) {
-				__decode_bytes(Py_UCS1);
+				__decode_bytes();
 			} else if (PyByteArray_Check(input)) {
-				__decode_bytearray(Py_UCS1);
+				__decode_bytearray();
 			} else {
 				PyErr_SetString(PyExc_TypeError, "argument 1 must be str or bytes or bytearray");
 			}

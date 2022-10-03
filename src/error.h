@@ -16,7 +16,7 @@
 #define YapicJson_Err_IntOverflow "Python int too large to convert to C long."
 
 #define YapicJson_Err_UnexpectedEnd "Unexpected end of data"
-#define YapicJson_Err_UnexpectedChar "Unexpected charcter: '%c'"
+// #define YapicJson_Err_UnexpectedChar "Unexpected charcter: '%c'"
 #define YapicJson_Err_UnexpectedCharInTrue "Unexpected character found when decoding 'true'"
 #define YapicJson_Err_UnexpectedCharInFalse "Unexpected character found when decoding 'false'"
 #define YapicJson_Err_UnexpectedCharInInfinity "Unexpected character found when decoding 'Infinity'"

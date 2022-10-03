@@ -2,6 +2,7 @@
 #define G627F265_3133_C70A_1248_E27DABF48BD8
 
 #include <yapic/module.hpp>
+#include <yapic/pyptr.hpp>
 #include "config.h"
 
 namespace Yapic { namespace Json {
@@ -14,11 +15,13 @@ public:
 	using ModuleExc = Yapic::ModuleExc<Module>;
 	using ModuleRef = Yapic::ModuleRef<Module>;
 
-	ModuleRef PyTimezone;
 	ModuleRef ItemsView;
 	ModuleRef Decimal;
 	ModuleRef UUID;
 	ModuleRef Enum;
+	ModuleRef json;
+	ModuleVar JSONDecodeError;
+	ModuleRef PyTimezone;
 	ModuleVar PyUTCTimezone;
 
 	ModuleVar STR_TZINFO;
@@ -35,11 +38,13 @@ public:
 	static inline int __init__(PyObject* module, Module* state) {
 		PyDateTime_IMPORT;
 
-		state->PyTimezone.Import("datetime", "timezone");
 		state->ItemsView.Import("collections.abc", "ItemsView");
 		state->Decimal.Import("decimal", "Decimal");
 		state->UUID.Import("uuid", "UUID");
 		state->Enum.Import("enum", "Enum");
+		state->json.Import("json");
+		state->JSONDecodeError = PyObject_GetAttrString(state->json, "JSONDecodeError");
+		state->PyTimezone.Import("datetime", "timezone");
 		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
 
 		state->STR_TZINFO = "tzinfo";
@@ -49,9 +54,20 @@ public:
 		state->STR_VALUE = "value";
 		state->__version__.Value(YAPIC_JSON_VERSION_STR).Export("__version__");
 
-		state->Error.Define("JsonError");
+		state->Error.Define("JsonError", PyExc_ValueError);
+
+		PyPtr<PyTupleObject> bases = PyTuple_New(2);
+		if (bases.IsNull()) {
+			throw ModuleExc::Error;
+		}
+		Py_INCREF(state->Error);
+		Py_INCREF(state->JSONDecodeError);
+		PyTuple_SET_ITEM(bases, 0, state->Error);
+		PyTuple_SET_ITEM(bases, 1, state->JSONDecodeError);
+		state->DecodeError.Define("JsonDecodeError", bases);
+		state->DecodeError.Export("JSONDecodeError");
+
 		state->EncodeError.Define("JsonEncodeError", state->Error);
-		state->DecodeError.Define("JsonDecodeError", state->Error);
 		return 0;
 	}
 

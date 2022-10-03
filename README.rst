@@ -154,9 +154,24 @@ Functions
 Exceptions
 ----------
 
-- ``yapic.json.JsonError``: base exception class
-- ``yapic.json.JsonEncodeError``: exception class for encoding errors
-- ``yapic.json.JsonDecodeError``: exception class for decoding errors
+.. code-block:: python
+
+   from json import JSONDecodeError
+
+   class JsonError(ValueError):
+      """Base exception for all json errors"""
+
+   class JsonEncodeError(JsonError):
+      """Exception for encoding errors"""
+
+   class JsonDecodeError(JsonError, JSONDecodeError):
+      """Exception for decoding errors
+
+      Can match python builtin ``json.JSONDecodeError``.
+      """
+
+   # alias for easier switch from std json lib
+   JSONDecodeError = JsonDecodeError
 
 
 Json to Python translations

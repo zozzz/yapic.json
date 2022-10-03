@@ -1,9 +1,10 @@
-import pytest
 import json as py_json
-from decimal import Decimal
-from datetime import datetime, date, time
-from uuid import UUID
+import re
 from collections.abc import ItemsView
+from decimal import Decimal
+from uuid import UUID
+
+import pytest
 from yapic import json as yapic_json
 
 
@@ -86,30 +87,33 @@ def test_dict_recursive(ensure_ascii):
     ex.match("Maximum recursion level reached, while encoding dict entry .*? at 'self' key.")
 
 
-@pytest.mark.parametrize("value", [
-    '{}',
-    '{"Hello World": "Hello World"}',
-    '{"1":1}',
-    '{"1.1": 1.1}',
-    '{"true": true}',
-    '{"false": false}',
-    '{"null": null}',
-    '{"array": [1]}',
-    '{"true"  :  true}',
-    '{   "true"  :  true}',
-    '{   "true"  :true}',
-    '{   "true":true}',
-    '{   "true":true  }',
-    '{   "true":true , "x":"y" }',
-    '{   "true":true,"x":"y" }',
-    '{"true":true    ,"x":"y"}',
-    '{"true":true,     "x":"y"}',
-    '{"Под водом проводе скоро половину свог живота":true}',
-    py_json.dumps(large_dict, separators=(" , ", " : "), ensure_ascii=True, default=default),
-    py_json.dumps(large_dict, separators=(",", ":"), ensure_ascii=False, default=default),
-    py_json.dumps(large_dict, indent=4, separators=(", ", ": "), ensure_ascii=True, default=default),
-    py_json.dumps(large_dict, indent=4, separators=("   , ", ":"), ensure_ascii=False, default=default),
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "{}",
+        '{"Hello World": "Hello World"}',
+        '{"1":1}',
+        '{"1.1": 1.1}',
+        '{"true": true}',
+        '{"false": false}',
+        '{"null": null}',
+        '{"array": [1]}',
+        '{"true"  :  true}',
+        '{   "true"  :  true}',
+        '{   "true"  :true}',
+        '{   "true":true}',
+        '{   "true":true  }',
+        '{   "true":true , "x":"y" }',
+        '{   "true":true,"x":"y" }',
+        '{"true":true    ,"x":"y"}',
+        '{"true":true,     "x":"y"}',
+        '{"Под водом проводе скоро половину свог живота":true}',
+        py_json.dumps(large_dict, separators=(" , ", " : "), ensure_ascii=True, default=default),
+        py_json.dumps(large_dict, separators=(",", ":"), ensure_ascii=False, default=default),
+        py_json.dumps(large_dict, indent=4, separators=(", ", ": "), ensure_ascii=True, default=default),
+        py_json.dumps(large_dict, indent=4, separators=("   , ", ":"), ensure_ascii=False, default=default),
+    ],
+)
 def test_dict_decode(value):
     assert yapic_json.loads(value) == py_json.loads(value)
     bytes_value = value.encode("utf-8")
@@ -124,79 +128,89 @@ def test_dict_decode_object_hook():
     assert yapic_json.loads('{"value":2}', object_hook=hook) == dict(value=4)
 
 
-def test_dict_decode_invalid1():
+def test_dict_decode_invalid1(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"A":2} f')
-    ex.match("Found junk data after valid JSON data at position: 8.")
+        yapic_json.loads(decoder_input_type('{"A":2} f'))
+    ex.match(re.escape("Found junk data after valid JSON data: line 1 column 9 (char 8)"))
 
 
-def test_dict_decode_invalid2():
+def test_dict_decode_invalid2(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{')
-    ex.match("Unexpected end of data at position: 1.")
+        yapic_json.loads(decoder_input_type("{"))
+    ex.match(re.escape("Unexpected end of data: line 1 column 2 (char 1)"))
 
 
-def test_dict_decode_invalid3():
+def test_dict_decode_invalid3(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"')
-    ex.match("Unexpected end of data at position: 2.")
+        yapic_json.loads(decoder_input_type('{"'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 3 (char 2)"))
 
 
-def test_dict_decode_invalid4():
+def test_dict_decode_invalid4(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"D"')
-    ex.match("Unexpected end of data at position: 4.")
+        yapic_json.loads(decoder_input_type('{"D"'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 5 (char 4)"))
 
 
-def test_dict_decode_invalid5():
+def test_dict_decode_invalid5(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"D"2')
-    ex.match("Unexpected character found when decoding 'dict', expected one of ':' at position: 4.")
+        yapic_json.loads(decoder_input_type('{"D"2'))
+    ex.match(
+        re.escape("Unexpected character found when decoding 'dict', expected one of ':': line 1 column 5 (char 4)")
+    )
 
 
-def test_dict_decode_invalid6():
+def test_dict_decode_invalid6(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"D" :')
-    ex.match("Unexpected end of data at position: 6.")
+        yapic_json.loads(decoder_input_type('{"D" :'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 7 (char 6)"))
 
 
-def test_dict_decode_invalid7():
+def test_dict_decode_invalid7(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"D" :2')
-    ex.match("Unexpected end of data at position: 7.")
+        yapic_json.loads(decoder_input_type('{"D" :2'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 8 (char 7)"))
 
 
-def test_dict_decode_invalid8():
+def test_dict_decode_invalid8(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"D" :2b')
-    ex.match("Unexpected character found when decoding 'dict', expected one of ',', '}' at position: 7.")
+        yapic_json.loads(decoder_input_type('{"D" :2b'))
+    ex.match(
+        re.escape("Unexpected character found when decoding 'dict', expected one of ',', '}': line 1 column 8 (char 7)")
+    )
 
 
-def test_dict_decode_invalid9():
+def test_dict_decode_invalid9(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{:}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 1.")
+        yapic_json.loads(decoder_input_type("{:}"))
+    ex.match(
+        re.escape("Unexpected character found when decoding 'dict', expected one of '\"': line 1 column 2 (char 1)")
+    )
 
 
-def test_dict_decode_invalid10():
+def test_dict_decode_invalid10(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"id":0,}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 8.")
+        yapic_json.loads(decoder_input_type('{"id":0,}'))
+    ex.match(
+        re.escape("Unexpected character found when decoding 'dict', expected one of '\"': line 1 column 9 (char 8)")
+    )
 
 
-def test_dict_decode_invalid11():
+def test_dict_decode_invalid11(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"x": true,')
-    ex.match("Unexpected end of data at position: 11.")
+        yapic_json.loads(decoder_input_type('{"x": true,'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 12 (char 11)"))
 
 
-def test_dict_decode_invalid12():
+def test_dict_decode_invalid12(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{1:1}')
-    ex.match("Unexpected character found when decoding 'dict', expected one of '\"' at position: 1.")
+        yapic_json.loads(decoder_input_type("{1:1}"))
+    ex.match(
+        re.escape("Unexpected character found when decoding 'dict', expected one of '\"': line 1 column 2 (char 1)")
+    )
 
 
-def test_dict_decode_invalid13():
+def test_dict_decode_invalid13(decoder_input_type):
     with pytest.raises(yapic_json.JsonDecodeError) as ex:
-        yapic_json.loads('{"foo":"bar","baz')
-    ex.match("Unexpected end of data at position: 17.")
+        yapic_json.loads(decoder_input_type('{"foo":"bar","baz'))
+    ex.match(re.escape("Unexpected end of data: line 1 column 18 (char 17)"))

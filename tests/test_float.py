@@ -1,8 +1,9 @@
-import pytest
-import math
 import decimal
 import json as py_json
+import math
 import platform
+
+import pytest
 from yapic import json as yapic_json
 
 IS32BIT = platform.architecture()[0] == "32bit"
@@ -30,39 +31,42 @@ def test_float_encode(value, expected, ensure_ascii):
 
 
 @pytest.mark.parametrize("expected,value", CASES)
-def test_float_decode(value, expected, decoder_input_type):
+def test_float_decode(value, expected, number_input_type):
     if math.isnan(expected):
         assert math.isnan(yapic_json.loads(value))
     else:
-        value = decoder_input_type(value)
+        value = number_input_type(value)
         assert yapic_json.loads(value) == py_json.loads(value)
 
 
-@pytest.mark.parametrize("value", [
-    "12345.34e23",
-    "12345.34e-2300",
-    "12345e+2300",
-    "12345e-2300",
-    "1.0001",
-    "-0.0001",
-    "1.0001e2",
-    "31415.926535897932",
-    "[31415.926535897932,314159.26535897932]",
-    "0.0001e2",
-    "0.1",
-    "0.0000",
-    "[0,0.0]",
-    "1.00e2",
-    "0e-2",
-    "0E-7",
-])
-def test_float_decode2(value, decoder_input_type):
-    value = decoder_input_type(value)
+@pytest.mark.parametrize(
+    "value",
+    [
+        "12345.34e23",
+        "12345.34e-2300",
+        "12345e+2300",
+        "12345e-2300",
+        "1.0001",
+        "-0.0001",
+        "1.0001e2",
+        "31415.926535897932",
+        "[31415.926535897932,314159.26535897932]",
+        "0.0001e2",
+        "0.1",
+        "0.0000",
+        "[0,0.0]",
+        "1.00e2",
+        "0e-2",
+        "0E-7",
+    ],
+)
+def test_float_decode2(value, number_input_type):
+    value = number_input_type(value)
     assert yapic_json.loads(value) == py_json.loads(value)
 
 
 @pytest.mark.parametrize("expected,value", CASES)
-def test_float_parse_hook(value, expected, decoder_input_type):
+def test_float_parse_hook(value, expected, number_input_type):
     if not math.isnan(expected):
-        value = decoder_input_type(value)
+        value = number_input_type(value)
         assert yapic_json.loads(value, parse_float=decimal.Decimal) == py_json.loads(value, parse_float=decimal.Decimal)
