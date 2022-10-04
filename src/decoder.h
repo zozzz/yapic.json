@@ -99,6 +99,7 @@ PyObject* _set_decoder_error(const char* err_msg, PyObject* input, Py_ssize_t po
 
 	if (exc != NULL) {
 		PyErr_SetObject(cls, exc);
+		Py_DECREF(exc);
 	}
 
 	return NULL;
