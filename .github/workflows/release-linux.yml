@@ -36,7 +36,7 @@ jobs:
 
       - uses: pdm-project/setup-pdm@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
           cache: true
 
       - name: deploy sdist
