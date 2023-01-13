@@ -57,4 +57,5 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          pdm run deploy
+          python3 -m pip install twine
+          python3 -m twine upload --skip-existing dist/*-manylinux*.whl
