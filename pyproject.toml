@@ -72,6 +72,8 @@ bench = "python ./benchmark/run.py"
 release = "python ./release.py"
 pre_deploy = "pdm install --no-self -G deploy"
 deploy = "twine upload --skip-existing dist/*.whl"
+pre_deploy_sdist = "pdm install --no-self -G deploy"
+deploy_sdist = "twine upload --skip-existing sdist/*.tar.gz"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

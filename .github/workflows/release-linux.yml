@@ -34,22 +34,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: install deps
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install twine
-
-      - name: build sdist
-        run: |
-          python3 setup.py sdist
-          mv dist sdist
+      - uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: true
 
       - name: deploy sdist
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python3 -m twine upload --skip-existing sdist/*.tar.gz
+          pdm build --no-wheel
+          pdm run deploy_sdist
 
       - name: build wheel
         uses: RalfG/python-wheels-manylinux-build@v0.5.0
@@ -61,4 +57,4 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python3 -m twine upload --skip-existing dist/*-manylinux*.whl
+          pdm run deploy
