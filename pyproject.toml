@@ -1,0 +1,76 @@
+[build-system]
+requires = ["pdm-pep517>=1.0", "setuptools"]
+build-backend = "pdm.pep517.api"
+
+[project]
+name = "yapic.json"
+authors = [{ name = "Zoltán Vetési", email = "vetesi.zoltan@gmail.com" }]
+description = "Fastest JSON encode / decode library."
+readme = "README.rst"
+license = { file = "LICENSE" }
+requires-python = ">=3.6"
+version = "1.8.3"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+keywords = ["json", "fast", "c", "c++", "cpp"]
+
+[project.urls]
+repository = "https://github.com/zozzz/yapic.json"
+
+[project.optional-dependencies]
+test = ["pytest"]
+benchmark = [
+    "simplejson",
+    "ujson",
+    "python-rapidjson",
+    "termcolor",
+    "metamagic.json",
+]
+
+[tool.pdm.build]
+source-includes = [
+    "LICENSE",
+    "README.rst",
+    "src/**/*.py",
+    "src/**/*.pyi",
+    "src/**/*.cpp",
+    "src/**/*.h",
+    "libs/yapic.core/src/yapic/core/include/**/*.hpp",
+    "libs/double-conversion/double-conversion/*.cc",
+    "libs/double-conversion/double-conversion/*.h",
+    "libs/double-conversion/COPYING",
+    "libs/double-conversion/LICENSE",
+    "libs/double-conversion/AUTHORS",
+]
+setup-script = "build_ext.py"
+run-setuptools = true
+
+
+[tool.pdm.scripts]
+pre_test = "pdm install --no-editable -G test"
+test = "pytest"
+pre_bench = "pdm install --no-editable -G benchmark"
+bench = "python ./benchmark/run.py"
+release = "python ./release.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-x -s"

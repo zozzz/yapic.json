@@ -74,7 +74,9 @@ def test_dict_encode(value, expected, ensure_ascii):
 def test_dict_same_keys_encode(ensure_ascii):
     data = [{"key": 1}, {"key": 2}, {"key": 3}, {"key": 4}, {"key": 5}]
 
-    print(yapic_json.dumps(data, ensure_ascii=ensure_ascii))
+    assert yapic_json.dumps(data, ensure_ascii=ensure_ascii) == py_json.dumps(
+        data, ensure_ascii=ensure_ascii, separators=(",", ":")
+    )
 
 
 def test_dict_recursive(ensure_ascii):
