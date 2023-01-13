@@ -37,6 +37,7 @@ repository = "https://github.com/zozzz/yapic.json"
 
 [project.optional-dependencies]
 test = ["pytest"]
+deploy = ["twine"]
 benchmark = [
     "simplejson",
     "ujson",
@@ -70,6 +71,8 @@ test = "pytest"
 pre_bench = "pdm install --no-editable -G benchmark"
 bench = "python ./benchmark/run.py"
 release = "python ./release.py"
+pre_deploy = "pdm install --no-self -G deploy"
+deploy = "twine upload --skip-existing dist/*.whl"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

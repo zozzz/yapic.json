@@ -19,27 +19,20 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: actions/setup-python@v4
+      - uses: pdm-project/setup-pdm@v3
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.arch }}
-
-      - name: install deps
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pytest twine pytest wheel
+          cache: true
 
       - name: build
-        run: python setup.py bdist_wheel
+        run: pdm build --no-sdist
 
       - name: run tests
-        run: |
-          python -m pip install --upgrade $(Get-Childitem –Path dist -Include *.whl -File -Recurse)
-          python -m pytest -q -x tests
+        run: pdm run test
 
       - name: deploy
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python3 -m twine upload --skip-existing dist/*.whl
+        run: pdm run deploy
