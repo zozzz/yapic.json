@@ -8,7 +8,7 @@ authors = [{ name = "Zoltán Vetési", email = "vetesi.zoltan@gmail.com" }]
 description = "Fastest JSON encode / decode library."
 readme = "README.rst"
 license = { file = "LICENSE" }
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 version = "1.8.4"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -18,7 +18,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Programming Language :: C++",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
