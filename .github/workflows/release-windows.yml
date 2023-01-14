@@ -23,7 +23,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.arch }}
-          cache: true
 
       - name: build
         run: pdm build --no-sdist
