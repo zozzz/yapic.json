@@ -16,6 +16,11 @@ class Int:
         return self.value
 
 
+class ForceDefaultFn:
+    def __init__(self, value):
+        self.value = value
+
+
 def default(o):
     return o.value
 
@@ -52,6 +57,7 @@ large_dict = {
     ({3.14: 3.14}, '{"3.14":3.14}'),
     ({UUID("f4aa36f7-254b-472d-9dc6-e030f244054a"): 1}, '{"f4aa36f7-254b-472d-9dc6-e030f244054a":1}'),
     ({Decimal("4.2"): "OK"}, '{"4.2":"OK"}'),
+    ({ForceDefaultFn("WithDefault"): "OK"}, '{"WithDefault":"OK"}'),
     # TODO:
     # ({datetime(2000, 1, 1, 12, 34, 56): "OK"}, '{"2000-01-01 12:34:56":"OK"}'),
     # ({date(2000, 1, 1): "OK"}, '{"2000-01-01":"OK"}'),
@@ -61,13 +67,13 @@ large_dict = {
 def test_dict_encode(value, expected, ensure_ascii):
     if expected is py_json.dumps:
         expected = py_json.dumps(value, ensure_ascii=ensure_ascii, separators=(",", ":"), default=default)
-    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii) == expected
-    assert yapic_json.dumps(value.items(), ensure_ascii=ensure_ascii) == expected
-    assert yapic_json.dumps(ItemsView(value), ensure_ascii=ensure_ascii) == expected
+    assert yapic_json.dumps(value, ensure_ascii=ensure_ascii, default=default) == expected
+    assert yapic_json.dumps(value.items(), ensure_ascii=ensure_ascii, default=default) == expected
+    assert yapic_json.dumps(ItemsView(value), ensure_ascii=ensure_ascii, default=default) == expected
 
-    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii) == expected.encode("utf-8")
-    assert yapic_json.dumpb(value.items(), ensure_ascii=ensure_ascii) == expected.encode("utf-8")
-    assert yapic_json.dumpb(ItemsView(value), ensure_ascii=ensure_ascii) == expected.encode("utf-8")
+    assert yapic_json.dumpb(value, ensure_ascii=ensure_ascii, default=default) == expected.encode("utf-8")
+    assert yapic_json.dumpb(value.items(), ensure_ascii=ensure_ascii, default=default) == expected.encode("utf-8")
+    assert yapic_json.dumpb(ItemsView(value), ensure_ascii=ensure_ascii, default=default) == expected.encode("utf-8")
 # yapf: enable
 
 

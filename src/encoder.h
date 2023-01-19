@@ -143,10 +143,10 @@ class Encoder {
 				}
 			} else if (PyIter_Check(obj)) {
 				return EncodeIterable(obj);
-			} else if (PyCallable_Check(defaultFn)) {
-				return EncodeWithDefault<false>(obj);
 			} else if (Module::State()->Decimal.CheckExact(obj)) {
 				return EncodeDecimal(obj);
+			} else if (PyCallable_Check(defaultFn)) {
+				return EncodeWithDefault<false>(obj);
 			}
 
 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_NotSerializable, obj);
@@ -185,14 +185,14 @@ class Encoder {
 				Encoder_RETURN_TRUE;
 			} else if (PyObject_HasAttr(obj, toJsonMethodName)) {
 				return EncodeWithJsonMethod<true>(obj);
-			} else if (PyCallable_Check(defaultFn)) {
-				return EncodeWithDefault<true>(obj);
 			} else if (Module::State()->Decimal.CheckExact(obj)) {
 				return EncodeDecimal(obj);
 			} else if (Module::State()->Enum.Check(obj)) {
 				return EncodeEnum<true>(obj);
 			} else if (Module::State()->UUID.Check(obj)) {
 				return EncodeUUID(obj);
+			} else if (PyCallable_Check(defaultFn)) {
+				return EncodeWithDefault<true>(obj);
 			}
 
 			PyErr_Format(Module::State()->EncodeError, YapicJson_Err_InvalidDictKey, obj, toJsonMethodName);
