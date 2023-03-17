@@ -145,6 +145,8 @@ class Encoder {
 				return EncodeIterable(obj);
 			} else if (Module::State()->Decimal.CheckExact(obj)) {
 				return EncodeDecimal(obj);
+			} else if (PyObject_HasAttr(reinterpret_cast<PyObject*>(Py_TYPE(obj)), Module::State()->Dataclass_FIELDS)) {
+				return EncodeDataclass(obj);
 			} else if (PyCallable_Check(defaultFn)) {
 				return EncodeWithDefault<false>(obj);
 			}
@@ -630,6 +632,8 @@ class Encoder {
 				Encoder_RETURN_FALSE;
 			}
 
+			Encoder_EnterRecursive();
+
 			PyObject* item = NULL;
 			PyObject *key;
 			PyObject *value;
@@ -678,6 +682,77 @@ class Encoder {
 			error:
 				Py_DECREF(iterator);
 				Py_XDECREF(item);
+				Encoder_RETURN_FALSE;
+		}
+
+		Encoder_FN(EncodeDataclass) {
+			PyObject* fields_dict = PyObject_GetAttr(obj, Module::State()->Dataclass_FIELDS);
+			if (fields_dict == NULL) {
+				Encoder_RETURN_FALSE;
+			}
+
+			if (!PyDict_CheckExact(fields_dict)) {
+				PyErr_Format(Module::State()->EncodeError, YapicJson_Err_DataclassFields, Module::State()->Dataclass_FIELDS, Py_TYPE(fields_dict));
+				goto error;
+			}
+
+			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
+			Encoder_AppendFast('{');
+			Encoder_EnterRecursive();
+
+			PyObject* key;
+			PyObject* value;
+			Py_ssize_t pos = 0;
+			bool is_empty = true;
+			PyObject* dc_field = Module::State()->Dataclass_Field;
+
+
+			while (PyDict_Next(fields_dict, &pos, &key, &value)) {
+				IF_UNLIKELY (!PyObject_TypeCheck(value, reinterpret_cast<PyTypeObject*>(dc_field))) {
+					continue;
+				}
+
+				Encoder_AppendFast('"');
+				IF_LIKELY (__encode_dict_key(key)) {
+					Encoder_AppendFast('"');
+					Encoder_AppendFast(':');
+
+					PyObject* dc_value = PyObject_GetAttr(obj, key);
+					IF_UNLIKELY (dc_value == NULL) {
+						goto error;
+					}
+					auto res = Encode(dc_value);
+					Py_DECREF(dc_value);
+
+					IF_LIKELY (res) {
+						Encoder_AppendFast(',');
+						is_empty = false;
+						continue;
+					} else {
+						if (Encoder_RecursionOccured()) {
+							Encoder_RecursionError(YapicJson_Err_MaxRecursion_DataclassValue, obj, key);
+						}
+						goto error;
+					}
+				} else {
+					if (Encoder_RecursionOccured()) {
+						Encoder_RecursionError(YapicJson_Err_MaxRecursion_DataclassKey, obj, key);
+					}
+					goto error;
+				}
+			}
+
+			if (is_empty == false) {
+				--buffer.cursor; // overwrite last ','
+			}
+
+			Encoder_AppendFast('}');
+			Encoder_LeaveRecursive();
+			Py_XDECREF(fields_dict);
+			Encoder_RETURN_TRUE;
+
+			error:
+				Py_XDECREF(fields_dict);
 				Encoder_RETURN_FALSE;
 		}
 

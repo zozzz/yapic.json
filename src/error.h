@@ -5,6 +5,8 @@
 #define YapicJson_Err_MaxRecursion "Maximum recursion level reached, while "
 #define YapicJson_Err_MaxRecursion_DictKey "encoding dict key %R."
 #define YapicJson_Err_MaxRecursion_DictValue "encoding dict entry %R at %R key."
+#define YapicJson_Err_MaxRecursion_DataclassKey "encoding dataclass %R key %R."
+#define YapicJson_Err_MaxRecursion_DataclassValue "encoding dataclass %R entry at %R key."
 #define YapicJson_Err_MaxRecursion_ItemsViewKey "encoding ItemsView key %R."
 #define YapicJson_Err_MaxRecursion_ItemsViewValue "encoding ItemsView entry %R at %R key."
 #define YapicJson_Err_MaxRecursion_ListValue "encoding list entry %R at %ld index."
@@ -14,6 +16,7 @@
 #define YapicJson_Err_MaxRecursion_Default "encoding %R with default function."
 #define YapicJson_Err_InvalidDictKey "This %R is an invalid dict key, please provide the 'default' function or define the %A method in class."
 #define YapicJson_Err_IntOverflow "Python int too large to convert to C long."
+#define YapicJson_Err_DataclassFields "Dataclass atrribute '%U' has wrong type: %R, expected dict."
 
 #define YapicJson_Err_UnexpectedEnd "Unexpected end of data"
 // #define YapicJson_Err_UnexpectedChar "Unexpected charcter: '%c'"

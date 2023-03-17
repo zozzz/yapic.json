@@ -1,15 +1,16 @@
-import time
-import sys
+import json as py_json
 import math
 import re
+import sys
+import time
 from decimal import Decimal
-from termcolor import colored
 
-import json as py_json
+import rapidjson
 import simplejson
 import ujson
-import rapidjson
-import metamagic.json
+from termcolor import colored
+
+# import metamagic.json
 from yapic import json as yapic_json
 
 BENCHMARKS = []
@@ -38,7 +39,7 @@ class Benchmark(metaclass=BenchmarkMeta):
         # ("simple", simplejson.dumps),
         ("ujson", ujson.dumps),
         ("rapidjson", rapidjson.dumps),
-        ("metamagic", metamagic.json.dumps),
+        # ("metamagic", metamagic.json.dumps),
     ]
 
     DECODER = [
@@ -47,14 +48,14 @@ class Benchmark(metaclass=BenchmarkMeta):
         # ("simple", simplejson.loads),
         ("ujson", ujson.loads),
         ("rapidjson", rapidjson.loads),
-        ("metamagic", metamagic.json.loads),
+        # ("metamagic", metamagic.json.loads),
     ]
 
     def get_encode_data(self):
         pass
 
     def get_decode_data(self):
-        return py_json.dumps(self.get_encode_data(), separators=(',', ':'), ensure_ascii=self.ENSURE_ASCII)
+        return py_json.dumps(self.get_encode_data(), separators=(",", ":"), ensure_ascii=self.ENSURE_ASCII)
 
     time = time.perf_counter
 
@@ -116,11 +117,13 @@ class Benchmark(metaclass=BenchmarkMeta):
         for t in times:
             std_dev.append(pow(abs(t - mean), 2))
 
-        res = dict(min=min_,
-                   max=max_,
-                   mean=mean,
-                   call_sec=(Decimal(data["rounds"]) * Decimal(data["iterations"])) / sum_,
-                   std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"]))))
+        res = dict(
+            min=min_,
+            max=max_,
+            mean=mean,
+            call_sec=(Decimal(data["rounds"]) * Decimal(data["iterations"])) / sum_,
+            std_dev=Decimal(math.sqrt(sum(std_dev) / Decimal(data["rounds"]))),
+        )
         res["score"] = res["mean"]
         return res
 
@@ -173,7 +176,7 @@ class Benchmark(metaclass=BenchmarkMeta):
                     kwargs = {}
                     table.write_group("DECODE")
 
-                for (lib_name, lib_fn) in t:
+                for lib_name, lib_fn in t:
                     if skip_comparsion and lib_name != "yapic":
                         continue
 
@@ -211,13 +214,14 @@ class Table:
         self.width = width
         self.lineno = 0
         width = width - 4 - (libname_max + 5)
-        self.columns = [["Title", "title", libname_max + 5, None, None],
-                        ["Min", "min", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-                        ["Max", "max", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-                        ["Mean", "mean", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-                        ["StdDev", "std_dev",
-                         round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
-                        ["Call/sec", "call_sec", 0, lambda a, b: a > b, lambda a, b: a < b]]
+        self.columns = [
+            ["Title", "title", libname_max + 5, None, None],
+            ["Min", "min", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+            ["Max", "max", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+            ["Mean", "mean", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+            ["StdDev", "std_dev", round(width / 5), lambda a, b: a < b, lambda a, b: a > b],
+            ["Call/sec", "call_sec", 0, lambda a, b: a > b, lambda a, b: a < b],
+        ]
 
         used = 0
         for i, x in enumerate(self.columns):
@@ -270,7 +274,7 @@ class Table:
         else:
             self.row_data.append(dict(title=title, data=data))
             row = "\r"
-            for (ctitle, field, width, best_cmp, worst_cmp) in self.columns:
+            for ctitle, field, width, best_cmp, worst_cmp in self.columns:
                 if field == "title":
                     value = title
                     field_value = ("    {:<%s}" % width).format(value)
@@ -301,7 +305,7 @@ class Table:
         worst = {}
 
         for i, data in enumerate(row_data):
-            for (title, field, width, best_cmp, worst_cmp) in self.columns:
+            for title, field, width, best_cmp, worst_cmp in self.columns:
                 if field == "title":
                     continue
 

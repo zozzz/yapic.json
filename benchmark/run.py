@@ -5,12 +5,15 @@ import decimal
 import json as py_json
 import math
 from collections.abc import ItemsView
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone, tzinfo
 from enum import Enum, IntEnum
 from io import StringIO
 from os import path
 
-import metamagic.json as metamagic_json
+import orjson
+
+# import metamagic.json as metamagic_json
 import rapidjson
 import simplejson
 import ujson
@@ -18,10 +21,10 @@ from yapic import json as yapic_json
 
 from benchmark import Benchmark
 
-try:
-    import orjson
-except ImportError:
-    orjson = None
+# try:
+#     import orjson
+# except ImportError:
+#     orjson = None
 
 # TODO: pass default method as argument only if it is required
 
@@ -664,7 +667,7 @@ class LargeDataToUnicodeBytes(LargeDataToAscii):
         ("yapicb", yapic_json.dumpb),
         ("python", lambda *a, **kw: py_json.dumps(*a, **kw).encode("utf-8")),
         ("ujson", lambda *a, **kw: ujson.dumps(*a, **kw).encode("utf-8")),
-        ("metamagic", lambda *a, **kw: metamagic_json.dumps(*a, **kw).encode("utf-8")),
+        # ("metamagic", lambda *a, **kw: metamagic_json.dumps(*a, **kw).encode("utf-8")),
         ("rapidjson", lambda *a, **kw: rapidjson.dumps(*a, **kw).encode("utf-8")),
     ] + ([("orjson", orjson.dumps)] if orjson else [])
 
@@ -809,6 +812,35 @@ class ListViewDictCopy(ListViewBase):
 
     def get_encode_data(self):
         return self.dict_factory(self._get_dict())
+
+
+class Dataclass(Benchmark):
+    """Dataclass"""
+
+    ENSURE_ASCII = False
+    ENCODER = [
+        ("ujson", lambda o, **kw: ujson.dumps(asdict(o))),
+        ("yapic", yapic_json.dumps),
+        ("yapicb", yapic_json.dumpb),
+        ("orjson", orjson.dumps),
+    ]
+    DECODER = None
+
+    @dataclass
+    class Name:
+        family: str
+        given: str
+
+    @dataclass
+    class User:
+        name: "Dataclass.Name"
+        email: str
+
+    def get_encode_data(self):
+        return Dataclass.User(
+            name=Dataclass.Name(family="Teszt", given="Elek"),
+            email="test@examlple.com",
+        )
 
 
 if __name__ == "__main__":

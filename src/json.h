@@ -23,6 +23,8 @@ public:
 	ModuleVar JSONDecodeError;
 	ModuleRef PyTimezone;
 	ModuleVar PyUTCTimezone;
+	ModuleRef Dataclass_FIELDS;
+	ModuleRef Dataclass_Field;
 
 	ModuleVar STR_TZINFO;
 	ModuleVar STR_UTCOFFSET;
@@ -46,6 +48,8 @@ public:
 		state->JSONDecodeError = PyObject_GetAttrString(state->json, "JSONDecodeError");
 		state->PyTimezone.Import("datetime", "timezone");
 		state->PyUTCTimezone = PyObject_GetAttrString(state->PyTimezone, "utc");
+		state->Dataclass_FIELDS.Import("dataclasses", "_FIELDS");
+		state->Dataclass_Field.Import("dataclasses", "Field");
 
 		state->STR_TZINFO = "tzinfo";
 		state->STR_UTCOFFSET = "utcoffset";

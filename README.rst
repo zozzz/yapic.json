@@ -217,5 +217,5 @@ Python to Json translations
    "time", """12:34:56"", ""12:34:56+0300"""
    "UUID", """aba04c17-6ea3-48c1-8dcd-74f0a9b79bee"""
    "Enum", encoding `Enum.value` attribute
-   "dict, ItemsView", "{...}"
+   "dict, ItemsView, dataclass", "{...}"
    "list, tuple, set, iterable", "[...]"
