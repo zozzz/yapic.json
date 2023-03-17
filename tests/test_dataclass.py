@@ -1,5 +1,6 @@
 import re
-from dataclasses import _FIELDS, MISSING, Field, asdict, dataclass
+import sys
+from dataclasses import _FIELDS, MISSING, Field, asdict, dataclass, field
 from typing import Any, List
 
 import pytest
@@ -8,6 +9,30 @@ from yapic import json as yapic_json
 
 class MyField(Field):
     pass
+
+
+def myfield(default_factory):
+    if sys.version_info[:3] >= (3, 10, 0):
+        return MyField(
+            default_factory=default_factory,
+            default=MISSING,
+            init=True,
+            repr=True,
+            hash=None,
+            compare=True,
+            metadata=None,
+            kw_only=False,
+        )
+    else:
+        return MyField(
+            default_factory=default_factory,
+            default=MISSING,
+            init=True,
+            repr=True,
+            hash=None,
+            compare=True,
+            metadata=None,
+        )
 
 
 @dataclass
@@ -48,16 +73,7 @@ def test_encode_dataclass(inst):
 def test_custom_field():
     @dataclass
     class CustomField:
-        name: str = MyField(
-            default_factory=lambda: "Hello World",
-            default=MISSING,
-            init=True,
-            repr=True,
-            hash=None,
-            compare=True,
-            metadata=None,
-            kw_only=False,
-        )
+        name: str = myfield(lambda: "Hello World")
 
     cf = CustomField()
     assert yapic_json.dumpb(cf) == yapic_json.dumpb(asdict(cf))
@@ -130,16 +146,7 @@ def test_missing_attribute():
     inst = MissingAttribute()
     assert yapic_json.dumpb(inst) == yapic_json.dumpb(asdict(inst))
 
-    getattr(MissingAttribute, _FIELDS)["extra"] = Field(
-        default_factory=MISSING,
-        default="Extra Field",
-        init=True,
-        repr=True,
-        hash=None,
-        compare=True,
-        metadata=None,
-        kw_only=False,
-    )
+    getattr(MissingAttribute, _FIELDS)["extra"] = field(default="Extra Field")
 
     with pytest.raises(AttributeError) as ex:
         assert yapic_json.dumpb(inst) == yapic_json.dumpb(asdict(inst))
