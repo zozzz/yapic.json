@@ -698,7 +698,8 @@ class Encoder {
 
 			if (!PyDict_CheckExact(fields_dict)) {
 				PyErr_Format(Module::State()->EncodeError, YapicJson_Err_DataclassFields, Module::State()->Dataclass_FIELDS, Py_TYPE(fields_dict));
-				goto error;
+				Py_DECREF(fields_dict);
+				Encoder_RETURN_FALSE;
 			}
 
 			Encoder_EnsureCapacity(Encoder_EXTRA_CAPACITY);
