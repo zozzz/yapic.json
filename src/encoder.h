@@ -607,12 +607,17 @@ class Encoder {
 					Encoder_AppendFast(':');
 					IF_LIKELY (Encode(value)) {
 						Encoder_AppendFast(',');
-					} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_DictValue, value, key)
+						continue;
 					} else {
+						if (Encoder_RecursionOccured()) {
+							Encoder_RecursionError(YapicJson_Err_MaxRecursion_DictValue, obj, key);
+						}
 						Encoder_RETURN_FALSE;
 					}
-				} else Encoder_HandleRecursion(YapicJson_Err_MaxRecursion_DictKey, key)
 				} else {
+					if (Encoder_RecursionOccured()) {
+						Encoder_RecursionError(YapicJson_Err_MaxRecursion_DictKey, key);
+					}
 					Encoder_RETURN_FALSE;
 				}
 			}
