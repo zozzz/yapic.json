@@ -101,4 +101,6 @@ ENV/
 .mypy_cache
 *.pdb
 *.asm
+*.i
 .pdm.toml
+.vs
