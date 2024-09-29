@@ -3,7 +3,7 @@ from glob import glob
 
 from setuptools import Extension
 
-VERSION = "1.9.4"
+VERSION = "1.9.5"
 
 define_macros = {
     "YAPIC_JSON_VERSION_MAJOR": VERSION.split(".")[0],

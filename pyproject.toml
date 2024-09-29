@@ -9,7 +9,7 @@ description = "Fastest JSON encode / decode library."
 readme = "README.rst"
 license = { file = "LICENSE" }
 requires-python = ">=3.7"
-version = "1.9.4"
+version = "1.9.5"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: BSD License",
@@ -84,7 +84,7 @@ addopts = "-x -s -v"
 
 [tool.ruff]
 line-length = 120
-target-version = "1.9.4"
+target-version = "1.9.5"
 
 [tool.ruff.lint]
 
