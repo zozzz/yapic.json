@@ -9,7 +9,7 @@ description = "Fastest JSON encode / decode library."
 readme = "README.rst"
 license = { file = "LICENSE" }
 requires-python = ">=3.7"
-version = "1.9.1"
+version = "1.9.2"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: BSD License",
@@ -83,7 +83,7 @@ addopts = "-x -s -v"
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "1.9.2"
 ignore-init-module-imports = true
 
 [tool.ruff.lint]
