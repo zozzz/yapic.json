@@ -45,8 +45,8 @@ jobs:
 
       - name: deploy
         env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           python3 -m pip install twine
           python3 -m twine upload --skip-existing wheelhouse/*.whl
