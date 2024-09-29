@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -83,10 +84,11 @@ addopts = "-x -s -v"
 
 [tool.ruff]
 line-length = 120
-target-version = "1.9.2"
-ignore-init-module-imports = true
+target-version = "py38"
 
 [tool.ruff.lint]
+
+ignore-init-module-imports = true
 select = [
     "F",
     "E",
@@ -107,7 +109,7 @@ fixable = ["ALL"]
 # TODO: vscode nem támogatja valamiért a `def alma(trait: type[T]) -> T` kifejezést, csak `typing.Type`-al
 unfixable = ["UP006"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
 [tool.ruff.format]
